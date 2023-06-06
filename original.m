@@ -32,9 +32,14 @@ function [x,H] = original(A, b)
         qq = z/beta;
         Q = [Q,qq];
 
+        H(n, n) = alpha;
+        if abs(beta) < 1e1
+            disp("LUCKY BREAKDOWN")
+            break
+        end
         H(n + 1, n) = beta;
         H(n, n + 1) = beta;
-        H(n, n) = alpha;
+        
 
        %QR on H using Givens QR
         if n ~= 1 %Dalla seconda iterazione in poi

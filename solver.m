@@ -1,71 +1,51 @@
-function [x] = solver(E, D, b, varargin)
+function [x] = solver(E, D, b, reorth_flag, P)
     
+    if isempty(P)
+        precond_flag = false;
+    else
+        precond_flag = true;
+    end
+
+    if isempty(reorth_flag)
+        reorth_flag = false;
+    end
+
     k = 1;
     e = [norm(b);0];
     m = length(D);
     n = length(E); 
     mat_dim = m + n;
-    Q_Givens_list = cell([mat_dim,1]);
+    givens_list = cell([mat_dim,1]);
     H = [];
 
-    qq = b/norm(b);
-    Q = qq;
-    qq1 = qq(1:m, :);
-    qq2 = qq(m+1:end, :);
-    r = [D*qq1 + E'*qq2; E*qq1];
-    
-    % alpha_1, 1st diagonal element of the tridiagonal matrix
-    H(1, 1) = Q(:, 1)' * r;
-    % Remove component in the direction of the first Lanczos vector
-    r = r - H(1, 1) * Q(:, 1); 
-
-    beta = norm(r);
-    % beta_1, 1st off-diagonal element of the tridiagonal matrix
-    H(2, 1) = beta; 
-    H(1, 2) = beta;
+    q = b/norm(b);
+    Q = q;
 
     while 1
         if k>mat_dim
             break
         end
+
+        [alpha, beta, q] = compute_new_values(D, E, q, m, reorth_flag, Q);
+        Q = [Q,q];
         
-        qq1 = qq(1:m, :);
-        qq2 = qq(m+1:end, :);
-        z = [D*qq1 + E'*qq2; E*qq1];
-
-        alpha = qq'*z;
-
-        %z = z - Q*(Q'*z);
-        %z = z - Q*(Q'*z);
-
-        beta = norm(z);
-        qq = z/beta;
-        Q = [Q,qq];
-
+        H(k, k) = alpha;
+        if beta < 1e-10
+            disp("LUCKY BREAKDOWN")
+            break
+        end
         H(k + 1, k) = beta;
         H(k, k + 1) = beta;
-        H(k, k) = alpha;
-
-        %QR on H using Givens QR
-        if k ~= 1 %Dalla seconda iterazione in poi
-            if k>2
-               i = k-2;
-               H(i:i+1,k) = Q_Givens_list{i}'*H(i:i+1,k);
-
-               i = k-1;
-               H(i:i+1,k) = Q_Givens_list{i}'*H(i:i+1,k);
-            else
-                for i = 1:(k-1)
-                    H(i:i+1,k) = Q_Givens_list{i}'*H(i:i+1,k);
-                end
-            end
-        end
-
-        Q_Givens = Givens_QR(H(:,k), k, k+1);
-        Q_Givens_list{k} = Q_Givens;
-        H(k:k+1,k) = Q_Givens'*H(k:k+1,k);
         
-        e(k:k+1) = Q_Givens'*e(k:k+1);
+
+        % QR on H using Givens QR
+        H = apply_old_rotations(k, H, givens_list);
+
+        actual_rotation = Givens_QR(H(:,k), k, k+1);
+        givens_list{k} = actual_rotation;
+        H(k:k+1,k) = actual_rotation'*H(k:k+1,k);
+        
+        e(k:k+1) = actual_rotation'*e(k:k+1);
        
         k = k+1;
         e = [e;0];
@@ -94,4 +74,32 @@ function Q = Givens_QR(v, i, k)
     Q(2,2) = c;
     Q(2,1) = s;
     Q(1,2) = -s;
+end
+
+function H = apply_old_rotations(k, H, givens_list)
+    
+    if k ~= 1
+        for i = max(1,k-2):(k-1)
+            H(i:i+1,k) = givens_list{i}'*H(i:i+1,k);
+        end
+    end
+
+end
+
+function [alpha, beta, q] = compute_new_values(D, E, q, m, reorth_flag, Q)
+    
+        q1 = q(1:m, :);
+        q2 = q(m+1:end, :);
+        z = [D*q1 + E'*q2; E*q1];
+
+        alpha = q'*z;
+
+        if reorth_flag
+            z = z - Q*(Q'*z);
+            z = z - Q*(Q'*z);
+        end
+
+        beta = norm(z);
+        q = z/beta;
+    
 end

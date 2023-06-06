@@ -22,7 +22,7 @@ function [A, E, D, b] = utility_read_matrix(filename, seed)
     A(1:m, m+1:end) = E';
     A(m+1:end, 1:m) = E;
     
-    %b = rand(m+n,1);
+    b = rand(m+n,1);
     
 end
 
