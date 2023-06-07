@@ -1,5 +1,3 @@
-% TODO passare il vettore di H da ruotare ad apply_old_rotations
-
 % SOLVER Solve a LS problem with GMRES
 %
 % input:
@@ -57,7 +55,7 @@ function [x] = solver(E, D, b, reorth_flag, P)
         
 
         % apply the old rotation to the new column of H
-        H = apply_old_rotations(k, H, givens_list);
+        H(:,k) = apply_old_rotations(k, H(:,k), givens_list);
         
         % compute the new rotation w.r.t. the new vector of H to zeros the
         % subdiagonal value
@@ -120,13 +118,13 @@ end
 % output:
 %   H -> edited matrix
 %
-function H = apply_old_rotations(k, H, givens_list)
+function h = apply_old_rotations(k, h, givens_list)
     % With k=2 it performs just one rotation
     % With k>2 it performs two rotation rotation
     % With k<2 no rotations are applied
     if k ~= 1
         for i = max(1,k-2):(k-1)
-            H(i:i+1,k) = givens_list{i}'*H(i:i+1,k);
+            h(i:i+1,:) = givens_list{i}'*h(i:i+1,:);
         end
     end
 
