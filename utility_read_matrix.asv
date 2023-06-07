@@ -22,13 +22,14 @@ function [A, E, D, b,c] = utility_read_matrix(filename, seed)
     A(1:m, m+1:end) = E';
     A(m+1:end, 1:m) = E;
     
-    [cost,flows] = get_b(graph);
-    b = [flows;cost];
+    [b,c] = get_b(graph);
+    b = [c;];
 end
 
-function [cost ,flows] = get_b(graph)
+function [b,flows] = get_b(graph)
     edgeList = graph.edgeList;
     nNodes = graph.nNodes;
+    numEdges = size(edgeList, 1);
 
     flows = zeros(nNodes,1);
     for i=1:length(graph.nodesList)
