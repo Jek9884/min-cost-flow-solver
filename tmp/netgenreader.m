@@ -1,5 +1,5 @@
 filename = "graph.txt";
-nodes = 256;
+nodes = 1024;
     
 M = readmatrix(filename);
 
@@ -10,4 +10,4 @@ E = incidence(G);
 
 b = M(nodes+1:end, 4); %taking vector of costs
 figure;
-spy(G);
+spy(E);
