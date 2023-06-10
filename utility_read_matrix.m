@@ -7,7 +7,7 @@ function [A, E, D, b,c] = utility_read_matrix(filename, seed)
     E = createIncidenceMatrix(graph);
     % Dimension of diagonal block
     m = size(E,2); 
-    n = graph.nNodes-1;
+    n = graph.nNodes;
     A = zeros(m+n, m+n);
     
     % Generate random elements
@@ -23,14 +23,14 @@ function [A, E, D, b,c] = utility_read_matrix(filename, seed)
     A(m+1:end, 1:m) = E;
     
     [cost,flows] = get_b(graph);
-    b = [flows;cost];
+    b = [cost;flows];
 end
 
 function [cost ,flows] = get_b(graph)
     edgeList = graph.edgeList;
     nNodes = graph.nNodes;
 
-    flows = zeros(nNodes,1);
+    flows = zeros(nNodes,1); 
     for i=1:length(graph.nodesList)
         node_id = graph.nodesList(i,1);
         flows(node_id)=graph.nodesList(i,2);
