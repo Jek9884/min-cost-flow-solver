@@ -1,18 +1,25 @@
 seed = 42;
-filename = "graphs/net8_8_1.dmx";
-[A, E, D, b] = utility_read_matrix(filename, seed);
-disp(cond(A));
+filename = "graphs/net14_8_1.dmx";
+[E, D, b] = utility_read_matrix(filename, seed);
+%disp(cond(A));
+
+dim = size(D,1)+size(E,1);
 tic;
-[x, e] = gmres(D, E, b, b, size(A,1) , 1e-10);
+[x, e, r_norm] = gmres(D, E, b, b,dim, 1e-3);
 toc;
-disp(norm(A*x-b)/norm(b));
-tic;
-x = minres(A, b, 1e-10, size(A,1));
-toc;
-disp(norm(A*x-b)/norm(b));
+
+disp(r_norm);
+
+%tic;
+%x = minres(A, b, 1e-10, size(A,1));
+%toc;
+%disp(norm(A*x-b)/norm(b));
 
 
-function [x,e] = gmres(D, E, b, starting_point, max_iterations, threshold)
+function [x,e,r_norm] = gmres(D, E, b, starting_point, max_iterations, threshold)
+    
+  patient_tol = 1e-12;
+
   m = max_iterations;
 
   % Here we are calculating r = (b - (A * starting_point)) exploiting 
@@ -32,6 +39,8 @@ function [x,e] = gmres(D, E, b, starting_point, max_iterations, threshold)
   e1 = zeros(m+1, 1);
   e1(1) = 1;
   e = r_norm * e1;
+
+  last_residual = -1;
   
   for k = 1:m
     [H(1:k+1, k), Q(:, k+1)] = lanczos(D, E,  Q, k, true);
@@ -52,6 +61,18 @@ function [x,e] = gmres(D, E, b, starting_point, max_iterations, threshold)
         fprintf("Terminated in %d iterations\n", k);
         break;
     end
+    
+    if abs(last_residual-r_norm) < patient_tol
+        patient = patient+1;
+    else
+        patient = 0;
+    end
+    if patient >= 10
+        fprintf("Terminated in %d iterations (due to the patient) \n", k);
+        break;
+    end
+    
+    last_residual = r_norm;
   end
 
   y = H(1:k, 1:k) \ e(1:k);

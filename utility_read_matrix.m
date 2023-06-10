@@ -1,5 +1,5 @@
-function [A, E, D, b,c] = utility_read_matrix(filename, seed)
-    rng(seed);
+function [E, D, b, c] = utility_read_matrix(filename, seed)
+    rng(seed); 
 
     graph = readDimacsFile(filename);
 
@@ -8,19 +8,11 @@ function [A, E, D, b,c] = utility_read_matrix(filename, seed)
     % Dimension of diagonal block
     m = size(E,2); 
     n = graph.nNodes;
-    A = zeros(m+n, m+n);
     
     % Generate random elements
     D = rand(m, 1);
     
-    % Create diagonal matrix
-    %D = diag(diagonal);
-    
     E = E(1:n, 1:end);
-    
-    A(1:m,1:m) = diag(D);
-    A(1:m, m+1:end) = E';
-    A(m+1:end, 1:m) = E;
     
     [cost,flows] = get_b(graph);
     b = [cost;flows];
