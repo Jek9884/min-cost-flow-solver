@@ -2,14 +2,23 @@ seed = 42;
 filename = "graphs/net8_8_1.dmx";
 [A, E, D, b] = utility_read_matrix(filename, seed);
 tic;
-[x, e] = gmres( A, b, b, size(A,1) , 1e-10);
+[x, e] = gmres(D, E, b, b, size(A,1) , 1e-10);
+toc;
+disp(norm(A*x-b)/norm(b));
+tic;
+x = minres(A, b, 1e-10, size(A,1));
 toc;
 disp(norm(A*x-b)/norm(b));
 
-function [x,e] = gmres( A, b, starting_point, max_iterations, threshold)
+
+function [x,e] = gmres(D, E, b, starting_point, max_iterations, threshold)
   m = max_iterations;
 
-  r = (b - (A * starting_point));
+  % Here we are calculating r = (b - (A * starting_point)) exploiting 
+  % the matrix structure.
+  sp1 = starting_point(1:size(D,1));
+  sp2 = starting_point(size(D,1)+1:end);
+  r = (b - [(D.*sp1)+(E'*sp2); E*sp1]);
 
   b_norm = norm(b);
 
@@ -24,22 +33,27 @@ function [x,e] = gmres( A, b, starting_point, max_iterations, threshold)
   e = r_norm * e1;
   
   for k = 1:m
-
-    % run arnoldi
-    [H(1:k+1, k), Q(:, k+1)] = arnoldi(A, Q, k);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, E,  Q, k);
     
-    % eliminate the last element in H ith row and update the rotation matrix
-    [H(1:k+1, k), cs(k), sn(k)] = apply_givens_rotation(H(1:k+1,k), cs, sn, k);
+    [H(:,k)] = apply_old_rotations(H(:,k), k, cs, sn);
+
+    [H(1:k+1, k),e(1:k+1, k), cs(k), cs(k)] = apply_current_rotation(H(1:k+1,k),e(1:k+1,k), k);
    
-    temp   =  cs(k) * e(k) + sn(k) * e(k + 1);
-    e(k + 1) = -sn(k) * e(k) + cs(k) * e(k + 1);
-    e(k)   = temp;
+    %temp     =  cs(k) * e(k) + sn(k) * e(k + 1);
+    %e(k + 1) = -sn(k) * e(k) + cs(k) * e(k + 1);
+    %e(k)     = temp;
     
     y = H(1:k, 1:k) \ e(1:k);
     x = starting_point + Q(:, 1:k) * y;
-    r = norm(b - (A * x))/b_norm;
 
-    if abs(r)<threshold
+    x1 = x(1:size(D,1));
+    x2 = x(size(D,1)+1:end);
+    %r_norm = norm(b - (A * x))/b_norm;
+    r = (b - [(D.*x1)+(E'*x2); E*x1]);
+    r_norm = norm(r)/b_norm;
+
+    %r_norm = norm(r);
+    if abs(r_norm)<threshold
         fprintf("Terminated in %d iterations\n", k);
         break;
     end
@@ -49,42 +63,48 @@ function [x,e] = gmres( A, b, starting_point, max_iterations, threshold)
   x = starting_point + Q(:, 1:k) * y;
 end
 
-function [h, q] = arnoldi(A, Q, k)
-  q = A*Q(:,k);  
+function [h, z] = lanczos(D, E, Q, k)
+  q1 = Q(1:size(D,1), k);
+  q2 = Q(size(D,1)+1:end, k);
+  z = [(D.*q1)+(E'*q2); E*q1];
+
   for i = max(1,k-2):k    
-    h(i) = q' * Q(:, i);
-    q = q - h(i) * Q(:, i);
+    h(i) = z' * Q(:, i);
+    z = z - h(i) * Q(:, i);
   end
-  h(k + 1) = norm(q);
-  q = q / h(k + 1);
+  h(k + 1) = norm(z);
+  z = z / h(k + 1);
 end
 
-function [h, cs_k, sn_k] = apply_givens_rotation(h, cs, sn, k)
-  % apply for ith column
+function [h] = apply_old_rotations(h,k, cs, sn)
   for i = max(1,k-2):k-1
     temp   =  cs(i) * h(i) + sn(i) * h(i + 1);
     h(i+1) = -sn(i) * h(i) + cs(i) * h(i + 1);
     h(i)   = temp;
   end
-
-  % update the next sin cos values for rotation
-  [cs_k, sn_k] = givens_rotation(h(k), h(k + 1));
-
-  % eliminate H(i + 1, i)
-  h(k) = cs_k * h(k) + sn_k * h(k + 1);
-  h(k + 1) = 0.0;
 end
 
-%%----Calculate the Givens rotation matrix----%%
-function [cs, sn] = givens_rotation(v1, v2)
-%  if (v1 == 0)
-%    cs = 0;
-%    sn = 1;
-%  else
-    t = sqrt(v1^2 + v2^2);
-%    cs = abs(v1) / t;
-%    sn = cs * v2 / v1;
-    cs = v1 / t;  % see http://www.netlib.org/eispack/comqr.f
-    sn = v2 / t;
-%  end
+function [h, e, cs_k, sn_k] = apply_current_rotation(h,e,k)
+  [cs_k, sn_k] = get_givens_rotation(h,k,k+1);
+
+  tmp       = cs_k * h(k)  + sn_k * h(k + 1);
+  h(k + 1)  = -sn_k * h(k) + cs_k * h(k + 1);
+  h(k) = tmp;
+
+  temp     =  cs_k * e(k) + sn_k * e(k + 1);
+  e(k + 1) = -sn_k * e(k) + cs_k * e(k + 1);
+  e(k)     = temp;
+end
+
+
+function [c,s] = get_givens_rotation(v, i, j)
+    % Coefficients to compute the Givens matrix
+    a = v(i);
+    b = v(j);
+
+    % Compute the Givens matrix
+    denominator = sqrt(a^2 + b^2);
+    c = a/denominator;
+    s = b/denominator;
+     
 end

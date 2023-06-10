@@ -11,14 +11,14 @@ function [A, E, D, b,c] = utility_read_matrix(filename, seed)
     A = zeros(m+n, m+n);
     
     % Generate random elements
-    diagonal = rand(m, 1);
+    D = rand(m, 1);
     
     % Create diagonal matrix
-    D = diag(diagonal);
+    %D = diag(diagonal);
     
     E = E(1:n, 1:end);
     
-    A(1:m,1:m) = D;
+    A(1:m,1:m) = diag(D);
     A(1:m, m+1:end) = E';
     A(m+1:end, 1:m) = E;
     
