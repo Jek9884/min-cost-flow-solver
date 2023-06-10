@@ -2,33 +2,27 @@ seed = 42;
 filename = "graphs/net8_8_1.dmx";
 [A, E, D, b] = utility_read_matrix(filename, seed);
 tic;
-[x, e, beta] = gmres( A, b, b, size(A,1) , 1e-10);
+[x, e] = gmres( A, b, b, size(A,1) , 1e-10);
 toc;
 disp(norm(A*x-b)/norm(b));
 
-
-function [x, e, beta] = gmres( A, b, x, max_iterations, threshold)
-  n = length(A);
+function [x,e] = gmres( A, b, starting_point, max_iterations, threshold)
   m = max_iterations;
 
-  % use x as the initial vector
-  r = b - (A * x);
+  r = (b - (A * starting_point));
 
   b_norm = norm(b);
-  error = norm(r) / b_norm;
 
-  % initialize the 1D vectors
   sn = zeros(m, 1);
   cs = zeros(m, 1);
-  %e1 = zeros(n, 1);
-  e1 = zeros(m+1, 1);
-  e1(1) = 1;
-  e = [error];
+  
   r_norm = norm(r);
   Q(:,1) = r / r_norm;
-  % Note: this is not the beta scalar in section "The method" above but
-  % the beta scalar multiplied by e1
-  beta = r_norm * e1;
+
+  e1 = zeros(m+1, 1);
+  e1(1) = 1;
+  e = r_norm * e1;
+  
   for k = 1:m
 
     % run arnoldi
@@ -37,13 +31,13 @@ function [x, e, beta] = gmres( A, b, x, max_iterations, threshold)
     % eliminate the last element in H ith row and update the rotation matrix
     [H(1:k+1, k), cs(k), sn(k)] = apply_givens_rotation(H(1:k+1,k), cs, sn, k);
    
-    temp   =  cs(k) * beta(k) + sn(k) * beta(k + 1);
-    beta(k + 1) = -sn(k) * beta(k) + cs(k) * beta(k + 1);
-    beta(k)   = temp;
+    temp   =  cs(k) * e(k) + sn(k) * e(k + 1);
+    e(k + 1) = -sn(k) * e(k) + cs(k) * e(k + 1);
+    e(k)   = temp;
     
-    y = H(1:k, 1:k) \ beta(1:k);
-    x = b + Q(:, 1:k) * y;
-    r = norm(b - (A * x))/norm(b);
+    y = H(1:k, 1:k) \ e(1:k);
+    x = starting_point + Q(:, 1:k) * y;
+    r = norm(b - (A * x))/b_norm;
 
     if abs(r)<threshold
         fprintf("Terminated in %d iterations\n", k);
@@ -51,18 +45,18 @@ function [x, e, beta] = gmres( A, b, x, max_iterations, threshold)
     end
   end
 
-  y = H(1:k, 1:k) \ beta(1:k);
-  x = b + Q(:, 1:k) * y;
+  y = H(1:k, 1:k) \ e(1:k);
+  x = starting_point + Q(:, 1:k) * y;
 end
 
-function [h, q] = arnoldi(A, Q, k)
-  q = A*Q(:,k);  
+function [h, z] = arnoldi(A, Q, k)
+  z = A*Q(:,k);  
   for i = max(1,k-2):k    
-    h(i) = q' * Q(:, i);
-    q = q - h(i) * Q(:, i);
+    h(i) = z' * Q(:, i);
+    z = z - h(i) * Q(:, i);
   end
-  h(k + 1) = norm(q);
-  q = q / h(k + 1);
+  h(k + 1) = norm(z);
+  z = z / h(k + 1);
 end
 
 function [h, cs_k, sn_k] = apply_givens_rotation(h, cs, sn, k)
