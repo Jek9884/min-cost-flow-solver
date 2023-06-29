@@ -1,24 +1,6 @@
-seed = 42;
-filename = "graphs/net14_8_1.dmx";
-[E, D, b] = utility_read_matrix(filename, seed);
-%disp(cond(A));
-
-dim = size(D,1)+size(E,1);
-tic;
-[x, e, r_norm] = gmres(D, E, b, b,dim, 1e-3);
-toc;
-
-disp(r_norm);
-
-%tic;
-%x = minres(A, b, 1e-10, size(A,1));
-%toc;
-%disp(norm(A*x-b)/norm(b));
-
-
-function [x,e,r_norm] = gmres(D, E, b, starting_point, max_iterations, threshold)
+function [x,e,r_norm] = our_gmres(D, E, b, starting_point, max_iterations, threshold)
     
-  patient_tol = 1e-12;
+  patient_tol = 1e-12; 
 
   m = max_iterations;
 
@@ -67,7 +49,7 @@ function [x,e,r_norm] = gmres(D, E, b, starting_point, max_iterations, threshold
     else
         patient = 0;
     end
-    if patient >= 10
+    if patient >= 3
         fprintf("Terminated in %d iterations (due to the patient) \n", k);
         break;
     end
@@ -98,7 +80,16 @@ function [h, z] = lanczos(D, E, Q, k, reorth_flag)
   z = z / h(k + 1);
 end
 
-function [h] = apply_old_rotations(h,k, cs, sn)
+%
+% This function applies the previous rotations to the newly computed column 
+%
+% Input: h - TODO
+%        k - TODO
+%        cs, sn - coefficients of the previous rotations
+%
+% Output: h - updated vector 
+%
+function [h] = apply_old_rotations(h, k, cs, sn)
   for i = max(1,k-2):k-1
     temp   =  cs(i) * h(i) + sn(i) * h(i + 1);
     h(i+1) = -sn(i) * h(i) + cs(i) * h(i + 1);
@@ -106,6 +97,7 @@ function [h] = apply_old_rotations(h,k, cs, sn)
   end
 end
 
+% TODO: commenti
 function [h, e, cs_k, sn_k] = apply_current_rotation(h,e,k)
   [cs_k, sn_k] = get_givens_rotation(h,k,k+1);
 
@@ -118,12 +110,18 @@ function [h, e, cs_k, sn_k] = apply_current_rotation(h,e,k)
   e(k)     = temp;
 end
 
-
+% 
+% This function computes the coefficients of the Givens rotation matrix
+% that zeros the j-th component of the vector v.
+%
+% Input: v    - vector of size 2
+%        i,j  - indices of the vector
+% Output: c,s - coefficients of the Givens matrix
+% 
 function [c,s] = get_givens_rotation(v, i, j) % Coefficients to compute the Givens matrix
     a = v(i);
     b = v(j);
 
-    % Compute the Givens matrix
     denominator = sqrt(a^2 + b^2);
     c = a/denominator;
     s = b/denominator;

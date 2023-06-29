@@ -1,32 +1,21 @@
 seed = 42;
-filename = "graphs/net8_8_1.dmx";
-[A, E, D, b] = utility_read_matrix(filename, seed);
+filename = "graphs/net10_8_1.dmx";
+[E, D, b] = utility_read_matrix(filename, seed);
 
-disp(length(b))
-disp(length(A))
+dim = size(D,1)+size(E,1);
 
-if isequal(A, A')
-    disp("SI LO E'")
-end
-
-
-disp("MATLAB MINRES")
+starting_point  = b;
+max_iterations  = dim;
+threshold       = 1e-10;
+reorth_flag     = true;
 tic;
-[x] = minres(A,b);
+[x, e, r_norm] = our_gmres(D, E, b, starting_point, max_iterations, threshold, reorth_flag);
 toc;
-res = b - A*x;
-disp(norm(res))
 
-disp("Custom GMRES with D and E")
-tic;
-[x] = solver(E, D, b, false);
-toc;
-res = b - A*x;
-disp(norm(res))
+disp(r_norm);
 
-disp("Custom GMRES with A")
 tic;
-[x_og] = original(A,b);
+[x, e, r_norm] = our_gmres(D, E, b, starting_point, max_iterations, threshold, false);
 toc;
-res_og = b - A*x_og;
-disp(norm(res_og))
+
+disp(r_norm);

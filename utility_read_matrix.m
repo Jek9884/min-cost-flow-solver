@@ -1,4 +1,4 @@
-function [E, D, b, c] = utility_read_matrix(filename, seed)
+function [E, D, b] = utility_read_matrix(filename, seed)
     rng(seed); 
 
     graph = readDimacsFile(filename);
