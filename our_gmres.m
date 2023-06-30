@@ -98,7 +98,7 @@ function [h, v] = lanczos(D, E, Q, k, reorth_flag)
     v = v - Q*(Q'*v);
   end
 
-  h(k + 1) = norm(z);
+  h(k + 1) = norm(v);
   v = v / h(k + 1);
 end
 
