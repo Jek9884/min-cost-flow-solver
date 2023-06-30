@@ -1,13 +1,11 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,e,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
+function [x,e,r_norm] = our_gmres(D, E, b, starting_point, dim, threshold, reorth_flag)
   % Checks on the input parameters
   assert(size(D,2)==1, "D must be a vector");
   assert(size(starting_point,2)==1, "starting_point must be a vector");
   assert(islogical(reorth_flag), "reorth_flag must be a boolean value");
-
-  dim = size(D,1)+size(E,1);
 
   % Initialization
   patient_tol = 1e-19; 
@@ -81,25 +79,24 @@ end
 %        reorth_flag - this flag is used to decide if the reorthogonalization is needed
 %
 % Output: h - TODO
-%         v - TODO
-%
-function [h, v] = lanczos(D, E, Q, k, reorth_flag)
+%         z - TODO
+function [h, z] = lanczos(D, E, Q, k, reorth_flag)
   q1 = Q(1:size(D,1), k);
   q2 = Q(size(D,1)+1:end, k);
-  v = [(D.*q1)+(E'*q2); E*q1];
+  z = [(D.*q1)+(E'*q2); E*q1];
 
   for i = max(1,k-2):k    
-    h(i) = v' * Q(:, i);
-    v = v - h(i) * Q(:, i);
+    h(i) = z' * Q(:, i);
+    z = z - h(i) * Q(:, i);
   end
 
   if reorth_flag  % apply reorthogonalization twice, if necessary
-    v = v - Q*(Q'*v);
-    v = v - Q*(Q'*v);
+    z = z - Q*(Q'*z);
+    z = z - Q*(Q'*z);
   end
 
   h(k + 1) = norm(z);
-  v = v / h(k + 1);
+  z = z / h(k + 1);
 end
 
 %
@@ -112,7 +109,7 @@ end
 % Output: h - updated vector 
 %
 function h = apply_old_rotations(h, k, cs, sn)
-  % Rotations are computed only on the last items of the vector, since TODO 
+  % Rotations are computed only on the last items of the vector, in this w
   for i = max(1,k-2):k-1
     temp   =  cs(i) * h(i) + sn(i) * h(i + 1);
     h(i+1) = -sn(i) * h(i) + cs(i) * h(i + 1);
@@ -122,14 +119,13 @@ end
 
 % This function applies the current rotation to the newly computed column
 %
-% Input: h - the vector to be rotated
-%        e - the canonical vector to be rotated
-%        k - the index of the column to be computed
+% Input: h - 
+%        e -
+%        k -
 % 
 % Output: h - updated vector
 %         e - updated vector
 %         cs_k, sn_k - coefficients of the current rotation
-% 
 function [h, e, cs_k, sn_k] = apply_current_rotation(h,e,k)
   [cs_k, sn_k] = get_givens_rotation(h,k,k+1);
 
@@ -150,6 +146,8 @@ end
 %        i,j  - indices of the vector
 % Output: c,s - coefficients of the Givens matrix
 % 
+% Time complexity: O(1), since it is a direct computation
+% Space complexity: O(1), since no additional memory is allocated
 function [c,s] = get_givens_rotation(v, i, j) % Coefficients to compute the Givens matrix
     a = v(i);
     b = v(j);
@@ -169,7 +167,8 @@ end
 %
 % Output: r - the residual
 %
-
+% Time complexity: O(n), because of the matrix-vector product
+% Space complexity: O(n)
 function r = calculate_the_residual_optimized(D, E, b, input_vector)
   part_1 = input_vector(1:size(D,1));
   part_2 = input_vector(size(D,1)+1:end);
