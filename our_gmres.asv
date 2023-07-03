@@ -59,7 +59,7 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     else
         patient = 0;
     end
-    if patient >= 300
+    if patient >= 3
         fprintf("Terminated in %d iterations (due to the patient) \n", k);
         break;
     end
@@ -68,12 +68,12 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
   end
 
   %check P is nan
-  %if ~isnan(P)
-  %  y = P \ (H(1:k, 1:k) \ e(1:k)); %TODO: fix
-  %else
-  %  y = H(1:k, 1:k) \ e(1:k);
-  %end
-  %x = starting_point + Q(:, 1:k) * y;
+  if ~isnan(P)
+    y = P \ (H(1:k, 1:k) \ e(1:k)); %TODO: fix
+  else
+    y = H(1:k, 1:k) \ e(1:k);
+  end
+  x = starting_point + Q(:, 1:k) * y;
 end
 
 %

@@ -11,7 +11,7 @@ function [E, D, b] = utility_read_matrix(filename, seed)
     
     % Generate random elements
     D = rand(m, 1);
-    
+ 
     E = E(1:n, 1:end);
     
     [cost,flows] = get_b(graph);
