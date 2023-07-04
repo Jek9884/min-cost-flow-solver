@@ -31,17 +31,22 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
 
   last_residual = -1;
   
-  for k = 1:m
+  % CON REORTH      = O(m * (k^2 n) + n^2) = [WC] = O(m* (m^2) n + n^2) =
+  %                         O(m^3n + mn^2)
+  %
+  % SENZA REORTH    = O(m * (k*n) + n^2) = [WC] = 
+  %                     O(m * (m*n) + n^2) = O(m^2n + mn^2)
+  for k = 1:m %
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, P, E, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, P, E, Q, k, reorth_flag); % --> O(k^2 n) oppure O(kn)
 
     % Step 2: apply the previous rotations to the newly computed column
-    H(:,k) = apply_old_rotations(H(:,k), k, cs, sn);
+    H(:,k) = apply_old_rotations(H(:,k), k, cs, sn); % --> O(1)
 
     % Step 3: apply the current rotation to the newly computed column
-    [H(1:k+1, k), e, cs(k), sn(k)] = apply_current_rotation(H(1:k+1,k), e, k);
+    [H(1:k+1, k), e, cs(k), sn(k)] = apply_current_rotation(H(1:k+1,k), e, k); % --> O(1)
     
-    % Step 4: check the residual
+    % Step 4: check the residual % --> O(n^2)
     y = H(1:k, 1:k) \ e(1:k);
     x = starting_point + Q(:, 1:k) * y;
 
@@ -59,7 +64,7 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     else
         patient = 0;
     end
-    if patient >= 3
+    if patient >= 10
         fprintf("Terminated in %d iterations (due to the patient) \n", k);
         break;
     end
@@ -88,23 +93,27 @@ end
 % Output: h - TODO
 %         v - TODO
 %
-function [h, v] = lanczos(D, P, E, Q, k, reorth_flag)
+function [h, v] = lanczos(D, P, E, Q, k, reorth_flag) %O(n^2*k) oppure O(n
   q1 = Q(1:size(D,1), k);
   q2 = Q(size(D,1)+1:end, k);
 
   if ~isnan(P)
     v = P * [(D.*q1)+(E'*q2); E*q1];
   else
-    v = [(D.*q1)+(E'*q2); E*q1];
+    v = [(D.*q1)+(E'*q2); E*q1]; % (D.*q1)   => O(d)
+                                 % (E'*q2)   => O(e^2)
+                                 % (D.*q1)+(E'*q2) => O(d+e)
+                                 % E*q1      => (e^2)
+                                 % O(d + e^2 + (d+e)) < O(n^2)
   end
 
-  for i = max(1,k-2):k    
+  for i = max(1,k-2):k    %O(k)
     h(i) = v' * Q(:, i);
     v = v - h(i) * Q(:, i);
   end
 
-  if reorth_flag  % apply reorthogonalization twice, if necessary
-    v = v - Q*(Q'*v);
+  if reorth_flag  % apply reorthogonalization twice, if necessary  % -> % O(k^2)
+    v = v - Q*(Q'*v); 
     v = v - Q*(Q'*v);
   end
 

@@ -13,6 +13,13 @@ tic;
 toc;
 disp(r_norm);
 
+
+tic;
+[x, r_norm] = our_gmres(D, E, P, b, starting_point, threshold, true);
+toc;
+disp(r_norm);
+
+
 P = create_preconditioner(D,E);
 
 
