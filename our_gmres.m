@@ -1,21 +1,27 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
+function [x,r_norm] = our_gmres(D, E, S, b, starting_point, threshold, reorth_flag)
   % Checks on the input parameters
   assert(size(D,2)==1, "D must be a vector");
   assert(size(starting_point,2)==1, "starting_point must be a vector");
   assert(islogical(reorth_flag), "reorth_flag must be a boolean value");
+  
+  residuals = [];
 
   dim = size(D,1)+size(E,1);
 
   % Initialization
-  patient_tol = 1e-13; 
+  patient_tol = 1e-19; 
   patient = 0;
   m = dim;
 
-  r = calculate_the_residual_optimized(D, P, E, b, starting_point);
-
+  r = calculate_the_residual_optimized(D, E, S, b, starting_point);
+  if ~isnan(S)
+      b1 = b(1:size(D,1));
+      b2 = b(size(D,1)+1:end);
+      b = [D.*b1; E*b1+S*b2];
+  end
   b_norm = norm(b);
 
   % Initialization of the vectors
@@ -33,7 +39,7 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
   
   for k = 1:m
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, P, E, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, E, S, Q, k, reorth_flag);
 
     % Step 2: apply the previous rotations to the newly computed column
     H(:,k) = apply_old_rotations(H(:,k), k, cs, sn);
@@ -42,13 +48,21 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     [H(1:k+1, k), e, cs(k), sn(k)] = apply_current_rotation(H(1:k+1,k), e, k);
     
     % Step 4: check the residual
-    y = H(1:k, 1:k) \ e(1:k);
+    y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
 
-    r = calculate_the_residual_optimized(D, P, E, b, x);
+    r = calculate_the_residual_optimized(D, E, S, b, x);
     r_norm = norm(r)/b_norm;
 
+    residuals(end+1) = r_norm;
+
     if abs(r_norm) < threshold
+        disp("Size of Q:");
+        disp(size(Q));
+        disp("Size of H:");
+        disp(size(H));
+
+        plot(residuals);
         fprintf("Terminated in %d iterations\n", k);
         break;
     end
@@ -60,6 +74,7 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
         patient = 0;
     end
     if patient >= 3
+        plot(residuals);
         fprintf("Terminated in %d iterations (due to the patient) \n", k);
         break;
     end
@@ -67,13 +82,8 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     last_residual = r_norm;
   end
 
-  %check P is nan
-  if ~isnan(P)
-    y = P \ (H(1:k, 1:k) \ e(1:k)); %TODO: fix
-  else
-    y = H(1:k, 1:k) \ e(1:k);
-  end
-  x = starting_point + Q(:, 1:k) * y;
+  y = H(1:k, 1:k) \ e(1:k);             %O( ([k=]m+n)^2 )
+  x = starting_point + Q(:, 1:k) * y;   %O( (m+n)^2 )
 end
 
 %
@@ -81,6 +91,7 @@ end
 %
 % Input: D - the original diagonal vector
 %        E - the original E matrix
+%        S - TODO
 %        Q - TODO
 %        k - the index of the column to be computed
 %        reorth_flag - this flag is used to decide if the reorthogonalization is needed
@@ -88,12 +99,17 @@ end
 % Output: h - TODO
 %         v - TODO
 %
-function [h, v] = lanczos(D, P, E, Q, k, reorth_flag)
+function [h, v] = lanczos(D, E, S, Q, k, reorth_flag)
   q1 = Q(1:size(D,1), k);
   q2 = Q(size(D,1)+1:end, k);
 
-  if ~isnan(P)
-    v = P * [(D.*q1)+(E'*q2); E*q1];
+  if ~isnan(S)
+    C11 = D.*D;
+    C12 = D.*E';
+    C21 = (E.*(D'))+(S*E);
+    C22 = E*E';
+    v = [(C11.*q1) + (C12*q2); 
+           C21*q1 + C22*q2];
   else
     v = [(D.*q1)+(E'*q2); E*q1];
   end
@@ -174,17 +190,29 @@ end
 %
 % Input: D - the original diagonal vector
 %        E - the original E matrix
+%        S - TODO
 %        b - the original b vector
 %        input_vector - the vector on which the residual is computed
 %
 % Output: r - the residual
 %
-
-function r = calculate_the_residual_optimized(D, P, E, b, input_vector)
+function r = calculate_the_residual_optimized(D, E, S, b, input_vector)
   part_1 = input_vector(1:size(D,1));
   part_2 = input_vector(size(D,1)+1:end);
-  if ~isnan(P)
-    r = P * (b - [(D.*part_1)+(E'*part_2); E*part_1]);      
+
+  if ~isnan(S)
+    C11 = D.*D;
+    C12 = D.*E';
+    C21 = (E.*(D'))+(S*E);
+    C22 = E*E';
+
+    r_partial  = b - [(D.*part_1)+(E'*part_2); E*part_1];
+     
+    r_partial_pt1 = r_partial(1:size(D,1));
+    r_partial_pt2 = r_partial(size(D,1)+1:end);
+
+    r = [(C11.*r_partial_pt1) + (C12*r_partial_pt2); 
+           (C21*r_partial_pt1) + (C22*r_partial_pt2)];      
   else
     r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
   end

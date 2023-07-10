@@ -22,5 +22,13 @@ S = create_schur_complement(D,E);
 
 %S = create_schur_complement(D,E);
 
+S = eye(256);
+P = [D;] 
+if ~isnan(S)
+  b1 = b(1:size(D,1));
+  b2 = b(size(D,1)+1:end);
+  b_new = [D.*b1; E*b1+S*b2];
+end
 
+disp(isequal(b,b_new));
 
