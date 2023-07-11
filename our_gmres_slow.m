@@ -1,32 +1,20 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
-  % Checks on the input parameters
-  assert(size(D,2)==1, "D must be a vector");
-  assert(size(starting_point,2)==1, "starting_point must be a vector");
-  assert(islogical(reorth_flag), "reorth_flag must be a boolean value");
-  
+function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_flag)
+  % Checks on the input parameter
   residuals = [];
 
-  dim = size(D,1)+size(E,1);
-
-  % Initialization
-  patient_tol = 1e-19; 
-  patient = 0;
+  dim = size(A,1);
   m = dim;
 
-  %if ~isnan(S)
-  %    b1 = b(1:size(D,1));
-  %    b2 = b(size(D,1)+1:end);
-  %    b = [D.*b1; E*b1+S*b2];
-  %end
   if ~isnan(P)
       b = P*b;
+      A = P*A*P';
   end
+
+  r = calculate_the_residual_optimized(A, P, b, starting_point);
   b_norm = norm(b);
- 
-  r = calculate_the_residual_optimized(D, E, P, b, starting_point);
 
   % Initialization of the vectors
   sn = zeros(m, 1); cs = zeros(m, 1); % Instead of saving the whole rotation matrix, we save only the coefficients.
@@ -43,7 +31,7 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
   
   for k = 1:m
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1)] = lanczos(D, E, P, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(A, P, Q, k, reorth_flag);
 
     % Step 2: apply the previous rotations to the newly computed column
     H(:,k) = apply_old_rotations(H(:,k), k, cs, sn);
@@ -54,8 +42,9 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     % Step 4: check the residual
     y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
+    x = P'\x;
 
-    r = calculate_the_residual_optimized(D, E, P, b, x);
+    r = calculate_the_residual_optimized(A, P, b, x);
     r_norm = norm(r)/b_norm;
 
     residuals(end+1) = r_norm;
@@ -71,23 +60,12 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
         break;
     end
     
-    % ======== PATIENT ========
-    if abs(last_residual - r_norm) < patient_tol
-        patient = patient+1;
-    else
-        patient = 0;
-    end
-    if patient >= 3
-        plot(residuals);
-        fprintf("Terminated in %d iterations (due to the patient) \n", k);
-        break;
-    end
-    
     last_residual = r_norm;
   end
 
   y = H(1:k, 1:k) \ e(1:k);             %O( ([k=]m+n)^2 )
   x = starting_point + Q(:, 1:k) * y;   %O( (m+n)^2 )
+  x = P'\x;
 end
 
 %
@@ -103,22 +81,11 @@ end
 % Output: h - TODO
 %         v - TODO
 %
-function [h, v] = lanczos(D, E, P, Q, k, reorth_flag)
-  q1 = Q(1:size(D,1), k);
-  q2 = Q(size(D,1)+1:end, k);
-
+function [h, v] = lanczos(A, P, Q, k, reorth_flag)
   if ~isnan(P)
-      %{
-    C11 = D.*D;
-    C12 = D.*E';
-    C21 = (E.*(D'))+(S*E);
-    C22 = E*E';
-    v = [(C11.*q1) + (C12*q2); 
-           C21*q1 + C22*q2];
-      %}
-      v = P \ [(D.*q1)+(E'*q2); E*q1];
+      v = A*Q(:,k);
   else
-    v = [(D.*q1)+(E'*q2); E*q1];
+      v = A*Q(:,k);
   end
 
   for i = max(1,k-2):k    
@@ -203,27 +170,10 @@ end
 %
 % Output: r - the residual
 %
-function r = calculate_the_residual_optimized(D, E, P, b, input_vector)
-  part_1 = input_vector(1:size(D,1));
-  part_2 = input_vector(size(D,1)+1:end);
-
+function r = calculate_the_residual_optimized(A, P, b, input_vector)
   if ~isnan(P) %S
-    %{
-    C11 = D.*D;
-    C12 = D.*E';
-    C21 = (E.*(D'))+(S*E);
-    C22 = E*E';
-
-    r_partial  = b - [(D.*part_1)+(E'*part_2); E*part_1];
-     
-    r_partial_pt1 = r_partial(1:size(D,1));
-    r_partial_pt2 = r_partial(size(D,1)+1:end);
-
-    r = [(C11.*r_partial_pt1) + (C12*r_partial_pt2); 
-           (C21*r_partial_pt1) + (C22*r_partial_pt2)];    
-    %}
-      r = P \ ((b - [(D.*part_1)+(E'*part_2); E*part_1]));
+      r = (b-A*input_vector);
   else
-    r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
+      r = (b-A*input_vector);
   end
 end
