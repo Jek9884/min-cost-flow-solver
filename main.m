@@ -15,18 +15,26 @@ A(1:size(D, 1), 1:size(D, 1)) = diag(D);
 A(size(D, 1)+1:end, 1:size(E, 2)) = E;
 A(1:size(D, 1), size(E, 2)+1:end) = E';
 
+P = create_schur_complement(D,E);
+
+disp(cond(A));
+disp(cond(P\eye(size(P))));
+disp(cond(P\A));
 
 %tic;
-%[x, r_norm] = our_gmres(D, E, NaN, b, starting_point, threshold, false);
+%[x, r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, false);
 %toc;
 %disp(r_norm);
 
-P = create_schur_complement(D,E);
+%tic;
+%[x, r_norm] = our_gmres(D, E, P, b, starting_point, threshold, false);
+%toc;
+%disp(r_norm);
 
-tic;
-[x, r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, false);
-toc;
-disp(r_norm);
+%tic;
+%[x, flag, relres, iter, resvec] = gmres_precond(P, A, b, false, dim, threshold);
+%toc;
+%disp(norm(b-A*x) / norm(b));
 
 %tic;
 %x2 = gmres(A,b, false, threshold, dim, P);

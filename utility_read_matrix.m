@@ -11,7 +11,6 @@ function [E, D, b] = utility_read_matrix(filename, seed)
     
     % Generate random elements
     D = rand(m, 1);
-    %D = zeros(m, 1);
     %for i = 1:m
     %    D(i) = poissrnd(5);
     %end
