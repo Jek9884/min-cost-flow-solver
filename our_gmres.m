@@ -3,7 +3,7 @@
 %
 
 %break_flag is 0 if the method reaches the convergence with the threshold, 1 if converges with the patient and 2 otherwise
-function [x, r_rel, residuals, break_flag] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
+function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
 
   % Checks on the input parameters
   assert(size(D,2)==1, "D must be a vector");

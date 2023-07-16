@@ -13,10 +13,10 @@ for i = 1:length(filenames)
         starting_point  = b;
         
         tic;
-        [x, r_rel, residuals, break_flag] = our_gmres(D, E, NaN, b, starting_point, threshold, reorth_flags(j));
+        [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, NaN, b, starting_point, threshold, reorth_flags(j));
         toc;
         
-        fprintf("Filename: %s Reorth_flag: %d Res rel: %e\n", filenames(i), reorth_flags(j), r_rel)
+        fprintf("Filename: %s Reorth_flag: %d Res rel: %e Num iter: %d\n", filenames(i), reorth_flags(j), r_rel, k)
 
         disp("---------------------")
 
