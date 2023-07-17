@@ -1,4 +1,4 @@
-function [E, D, b] = utility_read_matrix(filename, seed)
+function [E, D, b] = utility_read_matrix(filename, seed, print_size)
     rng(seed); 
 
     graph = readDimacsFile(filename);
@@ -19,6 +19,10 @@ function [E, D, b] = utility_read_matrix(filename, seed)
     
     [cost,flows] = get_b(graph);
     b = [cost;flows];
+
+    if print_size
+        fprintf("Number of nodes: %d\n Number of edges: %d\n", n, m)
+    end
 end
 
 function [cost ,flows] = get_b(graph)

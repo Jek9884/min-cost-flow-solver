@@ -1,7 +1,10 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
+
+%break_flag is 0 if the method reaches the convergence with the threshold, 1 if converges with the patient and 2 otherwise
+function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag)
+
   % Checks on the input parameters
   assert(size(D,2)==1, "D must be a vector");
   assert(size(starting_point,2)==1, "starting_point must be a vector");
@@ -56,34 +59,31 @@ function [x,r_norm] = our_gmres(D, E, P, b, starting_point, threshold, reorth_fl
     x = starting_point + Q(:, 1:k) * y;
 
     r = calculate_the_residual_optimized(D, E, P, b, x);
-    r_norm = norm(r)/b_norm;
+    r_rel = norm(r)/b_norm;
 
-    residuals(end+1) = r_norm;
+    residuals(end+1) = r_rel;
 
-    if abs(r_norm) < threshold
-        disp("Size of Q:");
-        disp(size(Q));
-        disp("Size of H:");
-        disp(size(H));
-
-        plot(residuals);
-        fprintf("Terminated in %d iterations\n", k);
+    if abs(r_rel) < threshold
+        break_flag = 0;
         break;
     end
     
     % ======== PATIENT ========
-    if abs(last_residual - r_norm) < patient_tol
+    if abs(last_residual - r_rel) < patient_tol
         patient = patient+1;
     else
         patient = 0;
     end
     if patient >= 3
-        plot(residuals);
-        fprintf("Terminated in %d iterations (due to the patient) \n", k);
+        break_flag = 1;
         break;
     end
     
-    last_residual = r_norm;
+    last_residual = r_rel;
+  end
+    
+  if k == m
+    break_flag = 2;
   end
 
   y = H(1:k, 1:k) \ e(1:k);             %O( ([k=]m+n)^2 )
@@ -227,3 +227,4 @@ function r = calculate_the_residual_optimized(D, E, P, b, input_vector)
     r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
   end
 end
+
