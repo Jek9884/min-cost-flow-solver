@@ -1,14 +1,18 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_flag)
+function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_flag)
   % Checks on the input parameter
   residuals = [];
 
   dim = size(A,1);
   m = dim;
 
-  r = calculate_the_residual_optimized(A, b, starting_point);
+  if ~isnan(P)
+      
+  end
+
+  r = calculate_the_residual_optimized(A, P, b, starting_point);
   b_norm = norm(b);
 
   % Initialization of the vectors
@@ -26,7 +30,7 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
   
   for k = 1:m
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1)] = lanczos(A, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(A, P, Q, k, reorth_flag);
 
     % Step 2: apply the previous rotations to the newly computed column
     H(:,k) = apply_old_rotations(H(:,k), k, cs, sn);
@@ -37,9 +41,9 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
     % Step 4: check the residual
     y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
-    %x = P'\x;
+    x = P'\x;
 
-    r = calculate_the_residual_optimized(A, b, x);
+    r = calculate_the_residual_optimized(A, P, b, x);
     r_norm = norm(r)/b_norm;
 
     residuals(end+1) = r_norm;
@@ -61,6 +65,7 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
 
   y = H(1:k, 1:k) \ e(1:k);             %O( ([k=]m+n)^2 )
   x = starting_point + Q(:, 1:k) * y;   %O( (m+n)^2 )
+  x = P'\x;
 end
 
 %
@@ -76,8 +81,12 @@ end
 % Output: h - TODO
 %         v - TODO
 %
-function [h, v] = lanczos(A, Q, k, reorth_flag)
-  v = A*Q(:,k);
+function [h, v] = lanczos(A, P, Q, k, reorth_flag)
+  if ~isnan(P)
+      
+  else
+      v = A*Q(:,k);
+  end
 
   for i = max(1,k-2):k    
     h(i) = v' * Q(:, i);
@@ -161,6 +170,10 @@ end
 %
 % Output: r - the residual
 %
-function r = calculate_the_residual_optimized(A, b, input_vector)
-    r = (b-A*input_vector);
+function r = calculate_the_residual_optimized(A, P, b, input_vector)
+  if ~isnan(P) %S
+      r = (b-A*input_vector);
+  else
+      r = (b-A*input_vector);
+  end
 end
