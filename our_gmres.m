@@ -19,14 +19,6 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
   patient = 0;
   m = dim;
 
-  %if ~isnan(S)
-  %    b1 = b(1:size(D,1));
-  %    b2 = b(size(D,1)+1:end);
-  %    b = [D.*b1; E*b1+S*b2];
-  %end
-  if ~isnan(P)
-      b = P*b;
-  end
   b_norm = norm(b);
  
   r = calculate_the_residual_optimized(D, E, P, b, starting_point);
@@ -80,6 +72,9 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
     end
     
     last_residual = r_rel;
+
+    %fprintf("Iter: %d Res rel: %e\n", k, last_residual);
+
   end
     
   if k == m
@@ -108,17 +103,14 @@ function [h, v] = lanczos(D, E, P, Q, k, reorth_flag)
   q2 = Q(size(D,1)+1:end, k);
 
   if ~isnan(P)
-      %{
-    C11 = D.*D;
-    C12 = D.*E';
-    C21 = (E.*(D'))+(S*E);
-    C22 = E*E';
-    v = [(C11.*q1) + (C12*q2); 
-           C21*q1 + C22*q2];
-      %}
-      v = P \ [(D.*q1)+(E'*q2); E*q1];
+     P_edit_inv = inv(P);
+     m = size(E,2);
+     B1  = (P_edit_inv(1:m,1:m)' .* D)  *  P_edit_inv(1:m,1:m);
+     B2  = (P_edit_inv(1:m,1:m)'  * E') *  P_edit_inv((m+1):end,(m+1):end);
+     B3  = (P_edit_inv((m+1):end,(m+1):end)'*  E)  *  P_edit_inv(1:m,1:m);
+     v = [(B1*q1)+(B2*q2); B3*q1];
   else
-    v = [(D.*q1)+(E'*q2); E*q1];
+     v = [(D.*q1)+(E'*q2); E*q1];
   end
 
   for i = max(1,k-2):k    
@@ -207,24 +199,21 @@ function r = calculate_the_residual_optimized(D, E, P, b, input_vector)
   part_1 = input_vector(1:size(D,1));
   part_2 = input_vector(size(D,1)+1:end);
 
-  if ~isnan(P) %S
-    %{
-    C11 = D.*D;
-    C12 = D.*E';
-    C21 = (E.*(D'))+(S*E);
-    C22 = E*E';
+  if ~isnan(P) 
+     P_edit_inv = inv(P);
+     m = size(E,2);
+     B1  = (P_edit_inv(1:m,1:m)' .* D)  *  P_edit_inv(1:m,1:m);
+     B2  = (P_edit_inv(1:m,1:m)'  * E') *  P_edit_inv((m+1):end,(m+1):end);
+     B3  = (P_edit_inv((m+1):end,(m+1):end)'*  E)  *  P_edit_inv(1:m,1:m);
+    
+     b_part_1 = b(1:size(D,1));
+     b_part_2 = b(size(D,1)+1:end);
 
-    r_partial  = b - [(D.*part_1)+(E'*part_2); E*part_1];
-     
-    r_partial_pt1 = r_partial(1:size(D,1));
-    r_partial_pt2 = r_partial(size(D,1)+1:end);
-
-    r = [(C11.*r_partial_pt1) + (C12*r_partial_pt2); 
-           (C21*r_partial_pt1) + (C22*r_partial_pt2)];    
-    %}
-      r = P \ ((b - [(D.*part_1)+(E'*part_2); E*part_1]));
+     b = [P_edit_inv(1:m,1:m)*b_part_1; P_edit_inv(m+1:end,m+1:end)*b_part_2];
+  
+     r = (b - [(B1*part_1)+(B2*part_2); B3*part_1]);
   else
-    r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
+     r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
   end
 end
 
