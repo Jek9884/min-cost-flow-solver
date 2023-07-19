@@ -1,50 +1,72 @@
 seed = 42;
-filename = "graphs/net8_8_1.dmx";
-[E, D, b] = utility_read_matrix(filename, seed);
 
-disp(size(E));
-starting_point  = b;
-threshold       = 1e-10;
-reorth_flag     = true;
+[E, D, b] = utility_read_matrix("graphs/net8_8_1.dmx", seed, false);
 
 dim = size(D, 1) + size(E, 1);
 
 A = zeros(dim, dim);
-
 A(1:size(D, 1), 1:size(D, 1)) = diag(D);
 A(size(D, 1)+1:end, 1:size(E, 2)) = E;
 A(1:size(D, 1), size(E, 2)+1:end) = E';
 
-P = create_schur_complement(D,E);
-
-disp(cond(A));
-disp(cond(P\eye(size(P))));
-disp(cond(P\A));
-
-%tic;
-%[x, r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, false);
-%toc;
-%disp(r_norm);
-
-%tic;
-%[x, r_norm] = our_gmres(D, E, P, b, starting_point, threshold, false);
-%toc;
-%disp(r_norm);
-
-%tic;
-%[x, flag, relres, iter, resvec] = gmres_precond(P, A, b, false, dim, threshold);
-%toc;
-%disp(norm(b-A*x) / norm(b));
-
-%tic;
-%x2 = gmres(A,b, false, threshold, dim, P);
-%x2 = lanczos_rotation(A,b,eye(2304,2304),threshold,dim);
-%toc;
-%r = (b - A*x2);
-%disp(norm(r));
+[S, P] = create_schur_complement(D,E);
 
 
-%S = create_schur_complement(D,E);
+P_edit = ichol(sparse(P));
+
+[x, r_rel] = our_gmres_slow(A,P_edit,b,b,1e-10,true);
+
+%P_edit_inv_t = P_edit' \ eye(length(P_edit'));
+%P_edit_inv = P_edit \ eye(length(P_edit));
+
+%f = @(v) (P_edit_inv_t * A * P_edit_inv)*v;
+%b = P_edit_inv_t*b;
+
+%[x, ~, resrel, n_iter] = minres(A, b, 1e-10, dim, P_edit', P_edit, b);
+%disp(resrel)
+%disp(n_iter)
 
 
+%{
+format long;
+seed = 42;
+filename = ["graphs/net8_8_1.dmx",
+            "graphs/net8_8_2.dmx",
+            "graphs/net8_8_3.dmx",
+            "graphs/net8_8_4.dmx",
+            "graphs/net8_8_5.dmx",
+            "graphs/net8_16_1.dmx",
+            "graphs/net8_16_2.dmx",
+            "graphs/net8_16_3.dmx",
+            "graphs/net8_16_4.dmx",
+            "graphs/net8_16_5.dmx",
+            "graphs/net10_8_1.dmx",
+            "graphs/net10_8_2.dmx",
+            "graphs/net10_8_3.dmx",
+            "graphs/net10_8_4.dmx",
+            "graphs/net10_8_5.dmx",
+            "graphs/net16_8_1.dmx",
+            "graphs/net16_8_2.dmx",
+            "graphs/net16_8_3.dmx",
+            "graphs/net16_8_4.dmx",
+            "graphs/net16_8_5.dmx",];
+
+for i = 1:length(filename)
+
+    [E, D, b] = utility_read_matrix(filename(i), seed, false);
+    dim = size(D, 1) + size(E, 1);
+
+    A = zeros(dim, dim);
+    A(1:size(D, 1), 1:size(D, 1)) = diag(D);
+    A(size(D, 1)+1:end, 1:size(E, 2)) = E;
+    A(1:size(D, 1), size(E, 2)+1:end) = E';
+    
+    fprintf("Filename %s Det: %f\n", filename(i), det(A))
+
+end
+%}
+
+%starting_point  = b;
+%threshold       = 1e-6;
+%reorth_flag     = true;
 

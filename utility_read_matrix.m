@@ -5,6 +5,9 @@ function [E, D, b] = utility_read_matrix(filename, seed, print_size)
 
     %[E, b] = createAdjacencyMatrix(graph);
     E = createIncidenceMatrix(graph);
+
+    %graph.nNodes = graph.nNodes-1;
+
     % Dimension of diagonal block
     m = size(E,2); 
     n = graph.nNodes;
@@ -15,22 +18,22 @@ function [E, D, b] = utility_read_matrix(filename, seed, print_size)
     %    D(i) = poissrnd(5);
     %end
  
-    E = E(1:n, 1:end);
+    E = E(1:n-1, 1:end);
     
     [cost,flows] = get_b(graph);
     b = [cost;flows];
 
     if print_size
-        fprintf("Number of nodes: %d\n Number of edges: %d\n", n, m)
+        fprintf("Number of nodes: %d\n Number of edges: %d\n", n-1, m)
     end
 end
 
 function [cost ,flows] = get_b(graph)
-    edgeList = graph.edgeList;
+    
     nNodes = graph.nNodes;
 
-    flows = zeros(nNodes,1); 
-    for i=1:length(graph.nodesList)
+    flows = zeros(nNodes-1,1); 
+    for i=1:length(graph.nodesList)-1
         node_id = graph.nodesList(i,1);
         flows(node_id)=graph.nodesList(i,2);
     end

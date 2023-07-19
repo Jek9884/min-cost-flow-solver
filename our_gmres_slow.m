@@ -7,11 +7,9 @@ function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_
 
   dim = size(A,1);
   m = dim;
+  P_inv = P \ eye(length(P));
 
-  if ~isnan(P)
-      b = P*b;
-      A = P*A*P';
-  end
+  b = P' \ b;
 
   r = calculate_the_residual_optimized(A, P, b, starting_point);
   b_norm = norm(b);
@@ -42,7 +40,6 @@ function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_
     % Step 4: check the residual
     y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
-    x = P'\x;
 
     r = calculate_the_residual_optimized(A, P, b, x);
     r_norm = norm(r)/b_norm;
@@ -61,11 +58,13 @@ function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_
     end
     
     last_residual = r_norm;
+
+    fprintf("Iter: %d Res rel: %f\n", k, r_norm);
   end
 
   y = H(1:k, 1:k) \ e(1:k);             %O( ([k=]m+n)^2 )
   x = starting_point + Q(:, 1:k) * y;   %O( (m+n)^2 )
-  x = P'\x;
+
 end
 
 %
@@ -83,7 +82,7 @@ end
 %
 function [h, v] = lanczos(A, P, Q, k, reorth_flag)
   if ~isnan(P)
-      v = A*Q(:,k);
+      v = (P_inv'*A*P_inv)*Q(:,k);
   else
       v = A*Q(:,k);
   end
@@ -172,7 +171,7 @@ end
 %
 function r = calculate_the_residual_optimized(A, P, b, input_vector)
   if ~isnan(P) %S
-      r = (b-A*input_vector);
+      r = (b-A*(P*input_vector));
   else
       r = (b-A*input_vector);
   end
