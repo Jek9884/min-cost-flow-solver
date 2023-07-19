@@ -3,6 +3,9 @@ seed = 42;
 [E, D, b] = utility_read_matrix("graphs/net8_8_1.dmx", seed, false);
 
 dim = size(D, 1) + size(E, 1);
+starting_point = b;
+threshold = 1e-10;
+reorth_flag = true;
 
 A = zeros(dim, dim);
 A(1:size(D, 1), 1:size(D, 1)) = diag(D);
@@ -11,10 +14,10 @@ A(1:size(D, 1), size(E, 2)+1:end) = E';
 
 [S, P] = create_schur_complement(D,E);
 
-
 P_edit = ichol(sparse(P));
 
-[x, r_rel] = our_gmres_slow(A,P_edit,b,b,1e-10,true);
+[x,r_norm] = our_gmres_slow(A, NaN, b, starting_point, threshold, reorth_flag);
+disp(r_norm);
 
 %P_edit_inv_t = P_edit' \ eye(length(P_edit'));
 %P_edit_inv = P_edit \ eye(length(P_edit));

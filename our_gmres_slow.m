@@ -1,15 +1,12 @@
 %
 % This is our implementation of the GMRES algorithm, exploiting the matrix structure. 
 %
-function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_flag)
+function [x,r_norm] = our_gmres_slow(A, P, b, starting_point, threshold, reorth_flag)
   % Checks on the input parameter
   residuals = [];
 
   dim = size(A,1);
   m = dim;
-  P_inv = P \ eye(length(P));
-
-  b = P' \ b;
 
   r = calculate_the_residual_optimized(A, P, b, starting_point);
 
@@ -30,7 +27,7 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
   
   for k = 1:m
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1)] = lanczos(A, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1)] = lanczos(A, P, Q, k, reorth_flag);
 
     % Step 2: apply the previous rotations to the newly computed column
     H(:,k) = apply_old_rotations(H(:,k), k, cs, sn);
@@ -42,7 +39,7 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
     y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
 
-    r = calculate_the_residual_optimized(A, b, x);
+    r = calculate_the_residual_optimized(A, P, b, x);
     r_norm = norm(r)/b_norm;
 
     residuals(end+1) = r_norm;
@@ -60,7 +57,7 @@ function [x,r_norm] = our_gmres_slow(A, b, starting_point, threshold, reorth_fla
     
     last_residual = r_norm;
 
-    fprintf("Iter: %d Res rel: %f\n", k, r_norm);
+    fprintf("Iter: %d Res rel: %e\n", k, r_norm);
 
   end
 
