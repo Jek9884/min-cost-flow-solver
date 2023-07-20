@@ -1,4 +1,4 @@
-function [E, D, b] = utility_read_matrix(filename, seed, print_size)
+function [E, D, b] = utility_read_matrix(filename, seed, debug)
     rng(seed); 
 
     graph = readDimacsFile(filename);
@@ -14,6 +14,7 @@ function [E, D, b] = utility_read_matrix(filename, seed, print_size)
     
     % Generate random elements
     D = rand(m, 1);
+    %D = D*20 +1;
     %for i = 1:m
     %    D(i) = poissrnd(5);
     %end
@@ -23,7 +24,7 @@ function [E, D, b] = utility_read_matrix(filename, seed, print_size)
     [cost,flows] = get_b(graph);
     b = [cost;flows];
 
-    if print_size
+    if debug
         fprintf("Number of nodes: %d\n Number of edges: %d\n", n-1, m)
     end
 end
