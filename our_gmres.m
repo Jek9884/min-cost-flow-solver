@@ -40,7 +40,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
   dim = size(D,1)+size(E,1);
 
   % Initialization
-  patient_tol = 1e-19; 
+  patient_tol = 1e-10; 
   patient = 0;
   sn = zeros(dim, 1); cs = zeros(dim, 1); % Instead of saving the whole rotation matrix, we save only the coefficients.
   e1 = zeros(dim, 1);     
@@ -60,7 +60,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
   Q(:,1) = r / r_norm;
   e = r_norm * e1;
 
-  for k = 1:dim
+  for k = 1:dim-1
     % Step 1: Lanczos algorithm
     [H(1:k+1, k), Q(:, k+1), is_breakdown_happened] = lanczos(D, E, P_inv, Q, k, reorth_flag);
     if is_breakdown_happened
@@ -105,7 +105,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
     end
   end
     
-  if k == dim
+  if k == dim-1
     break_flag = -1;
   end
 
