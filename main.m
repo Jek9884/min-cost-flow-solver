@@ -16,7 +16,7 @@ A(1:size(D, 1), size(E, 2)+1:end) = E';
 [S, P] = create_preconditioner(D,E);
 
 % ==================== 
-trials = 1;
+trials = 5;
 
 disp("VERSIONE SLOW SENZA PRECONDITIONING")
 total_time = 0;
