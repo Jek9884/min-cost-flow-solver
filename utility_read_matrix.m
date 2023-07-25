@@ -14,7 +14,7 @@ function [E, D, b] = utility_read_matrix(filename, seed, debug)
     
     % Generate random elements
     D = rand(m, 1);
-    %D = D*20 +1;
+    D = D * 4 +1;
     %for i = 1:m
     %    D(i) = poissrnd(5);
     %end

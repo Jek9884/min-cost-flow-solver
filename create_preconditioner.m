@@ -10,6 +10,7 @@ function [S, P] = create_preconditioner(D, E)
         P(size(D, 1)+1:end, size(E, 2)+1:end) = -S;
 
         P = ichol(sparse(P));
+        S = ichol(sparse(-S));
     x = toc;
     fprintf("S created in %f seconds.\n",x);
 end

@@ -62,14 +62,14 @@ function [x,r_norm, k] = our_gmres_slow(A, P, b, starting_point, threshold, reor
 end
 
 function A = apply_preconditioning_on_A(A, P)
-    P_edit_inv = inv(P);
-    A = P_edit_inv'*A*P_edit_inv;
+    %P_edit_inv = P \ eye(size(P));%inv(P);
+    A = P\(A\P');
     %A = P\A;
 end
 
 function b = apply_preconditioning_on_b(b, P)
-    P_edit_inv = inv(P);
-    b = P_edit_inv'*b;
+    %P_edit_inv =  P \ eye(size(P));%inv(P);
+    b = P\b;
     %b = P\b;
 end
 
@@ -89,8 +89,9 @@ end
 %
 function [h, v] = lanczos(A, P, Q, k, reorth_flag)
   if ~isnan(P)
-      A = apply_preconditioning_on_A(A, P);
-      v = A*Q(:,k);
+      %A = apply_preconditioning_on_A(A, P);
+      %v = A*Q(:,k);
+      v = P'\(A*(P\Q(:,k)));
   else
       v = A*Q(:,k);
   end
@@ -179,10 +180,11 @@ end
 %
 function r = calculate_the_residual_optimized(A, P, b, input_vector)
   if ~isnan(P) %S
-      A = apply_preconditioning_on_A(A, P);
-      b = apply_preconditioning_on_b(b, P);
-
-      r = (b-A*input_vector);
+      %A = apply_preconditioning_on_A(A, P);
+      %b = apply_preconditioning_on_b(b, P);
+        
+      r = (P'\b) - (P'\(A*(P\input_vector)));
+      %r = (b-A*input_vector);
   else
       r = (b-A*input_vector);
   end
