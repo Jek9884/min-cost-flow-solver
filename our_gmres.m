@@ -25,7 +25,7 @@
 %                     -1 - the algorithm did not converge
 %         k - the number of iterations
 %
-function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_point, threshold, reorth_flag, debug)
+function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_point, threshold, reorth_flag, debug)
 
   % Checks on the input parameters
   assert(size(D,2)==1, "D must be a vector");
@@ -48,13 +48,13 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
   last_residual = -1;
 
   b_norm = norm(b);
-  if ~isnan(P)
-    P_inv = inv(P); % P \ eye(size(P));
+  if ~isnan(S)
+    D_chol = ichol(sparse(diag(D)));
   else
-    P_inv = NaN;
+    D_chol = NaN;
   end
 
-  r = calculate_the_residual_optimized(D, E, P_inv, b, starting_point);
+  r = calculate_the_residual_optimized(D, E, S, D_chol, b, starting_point);
   r_norm = norm(r);
 
   Q(:,1) = r / r_norm;
@@ -62,7 +62,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
 
   for k = 1:dim-1
     % Step 1: Lanczos algorithm
-    [H(1:k+1, k), Q(:, k+1), is_breakdown_happened] = lanczos(D, E, P_inv, Q, k, reorth_flag);
+    [H(1:k+1, k), Q(:, k+1), is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_flag);
     if is_breakdown_happened
         break_flag = 2;
         break;
@@ -78,7 +78,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, P, b, starting_p
     y = H(1:k, 1:k) \ e(1:k); 
     x = starting_point + Q(:, 1:k) * y;
 
-    r = calculate_the_residual_optimized(D, E, P_inv, b, x);
+    r = calculate_the_residual_optimized(D, E, S, D_chol, b, x);
     r_rel = norm(r)/b_norm;
 
     residuals(end+1) = r_rel;
@@ -130,17 +130,24 @@ end
 % Output: h - TODO
 %         v - TODO
 %
-function [h, v, is_breakdown_happened] = lanczos(D, E, P_inv, Q, k, reorth_flag)
+function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_flag)
   q1 = Q(1:size(D,1), k);
   q2 = Q(size(D,1)+1:end, k);
   is_breakdown_happened = false;
 
-  if ~isnan(P_inv)
-     m = size(E,2);
-     B1  = (P_inv(1:m,1:m)' .* D)  *  P_inv(1:m,1:m);
-     B2  = (P_inv(1:m,1:m)'  * E') *  P_inv((m+1):end,(m+1):end);
-     B3  = (P_inv((m+1):end,(m+1):end)'*  E)  *  P_inv(1:m,1:m);
-     v = [(B1*q1)+(B2*q2); B3*q1];
+  if ~isnan(S)
+
+     B1 = D_chol \ q1;
+     B2 = S \ q2;
+    
+     B11 = (D .* B1) + (E' * B2);
+     B21 = E * B1;
+    
+     B12 = D_chol \ B11;
+     B22 = S' \ B21;
+    
+     v = [B12; B22];
+
   else
      v = [(D.*q1)+(E'*q2); E*q1];
   end
@@ -230,24 +237,29 @@ end
 %
 % Output: r - the residual
 %
-function r = calculate_the_residual_optimized(D, E, P_inv, b, input_vector)
+function r = calculate_the_residual_optimized(D, E, S, D_chol, b, input_vector)
+  
+  m = size(D,1);
+
   part_1 = input_vector(1:size(D,1));
   part_2 = input_vector(size(D,1)+1:end);
 
-  if ~isnan(P_inv) 
-     m = size(E,2);
-     B1  = (P_inv(1:m,1:m)' .* D)  *  P_inv(1:m,1:m);
-     B2  = (P_inv(1:m,1:m)'  * E') *  P_inv((m+1):end,(m+1):end);
-     B3  = (P_inv((m+1):end,(m+1):end)'*  E)  *  P_inv(1:m,1:m);
+  if ~isnan(S) 
+     
+     B1 = D_chol \ part_1;
+     B2 = S \ part_2;
     
-     b_part_1 = b(1:size(D,1));
-     b_part_2 = b(size(D,1)+1:end);
+     B11 = (D .* B1) + (E' * B2);
+     B21 = E * B1;
+    
+     B12 = D_chol \ B11;
+     B22 = S' \ B21;
 
-     b = [P_inv(1:m,1:m)*b_part_1; P_inv(m+1:end,m+1:end)*b_part_2];
-  
-     r = (b - [(B1*part_1)+(B2*part_2); B3*part_1]);
+     block1 = D_chol \ b(1:m);
+     block2 = S' \ b(m+1:end);
+
+     r = ([block1;block2] - [B12;B22]);
   else
      r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
   end
 end
-

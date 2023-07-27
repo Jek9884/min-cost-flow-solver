@@ -17,7 +17,7 @@ A(1:size(D, 1), size(E, 2)+1:end) = E';
 
 % ==================== 
 trials = 1;
-%{
+
 disp("VERSIONE SLOW SENZA PRECONDITIONING")
 total_time = 0;
 for trial=1:trials
@@ -50,7 +50,7 @@ for trial=1:trials
     fprintf("Trial: %d | Res. Rel: %e | Iter: %d | Trial time : %f\n", trial, r_rel, k, trial_time );
 end
 fprintf(">>>> Total mean time: %f\n\n", total_time/trials);
-%}
+
 
 disp("VERSIONE FAST CON PRECONDITIONING")
 total_time = 0;
