@@ -114,6 +114,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   if debug
     fprintf("The algorithm ends with %d iterations, the break_flag is %d\n", k, break_flag);
+    semilogy(residuals);
   end
 end
 
@@ -163,7 +164,7 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
   end
 
   h(k + 1) = norm(v);
-  if (h(k + 1) == 0)                                      % Lucky breakdown
+  if abs(h(k + 1)) <= 1e-16                               % Lucky breakdown
       is_breakdown_happened = true;
   end
   v = v / h(k + 1);
