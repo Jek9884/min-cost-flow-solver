@@ -49,7 +49,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   b_norm = norm(b);
   if ~isnan(S)
-    D_chol = ichol(sparse(diag(D)));
+    D_chol = diag(sqrt(sparse(D))); %ichol(sparse(diag(D)));
   else
     D_chol = NaN;
   end
