@@ -49,7 +49,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   b_norm = norm(b);
   if ~isnan(S)
-    D_chol = diag(sqrt(sparse(D))); %ichol(sparse(diag(D)));
+    D_chol = sqrt(sparse(D));%ichol(sparse(diag(D)));
   else
     D_chol = NaN;
   end
@@ -138,13 +138,13 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
 
   if ~isnan(S)
 
-     B1 = D_chol \ q1;
+     B1 = D_chol .\ q1;
      B2 = S \ q2;
     
      B11 = (D .* B1) + (E' * B2);
      B21 = E * B1;
     
-     B12 = D_chol \ B11;
+     B12 = D_chol .\ B11;
      B22 = S' \ B21;
     
      v = [B12; B22];
@@ -247,16 +247,16 @@ function r = calculate_the_residual_optimized(D, E, S, D_chol, b, input_vector)
 
   if ~isnan(S) 
      
-     B1 = D_chol \ part_1;
+     B1 = D_chol .\ part_1;
      B2 = S \ part_2;
     
      B11 = (D .* B1) + (E' * B2);
      B21 = E * B1;
     
-     B12 = D_chol \ B11;
+     B12 = D_chol .\ B11;
      B22 = S' \ B21;
 
-     block1 = D_chol \ b(1:m);
+     block1 = D_chol .\ b(1:m);
      block2 = S' \ b(m+1:end);
 
      r = ([block1;block2] - [B12;B22]);
