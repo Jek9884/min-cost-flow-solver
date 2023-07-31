@@ -3,10 +3,7 @@ function [E, D, b] = utility_read_matrix(filename, seed, debug)
 
     graph = readDimacsFile(filename);
 
-    %[E, b] = createAdjacencyMatrix(graph);
     E = createIncidenceMatrix(graph);
-
-    %graph.nNodes = graph.nNodes-1;
 
     % Dimension of diagonal block
     m = size(E,2); 
@@ -14,10 +11,6 @@ function [E, D, b] = utility_read_matrix(filename, seed, debug)
     
     % Generate random elements
     D = rand(m, 1);
-    %
-    %for i = 1:m
-    %    D(i) = poissrnd(5);
-    %end
  
     E = E(1:n-1, 1:end);
     
@@ -78,26 +71,6 @@ function graph = readDimacsFile(filename)
     
     graph.nNodes = nNodes;
     fclose(fid);
-end
-
-function [adjacencyMatrix, b] = createAdjacencyMatrix(graph)
-    edgeList = graph.edgeList;
-    nNodes = graph.nNodes;
-    adjacencyMatrix = zeros(nNodes);
-    numEdges = size(edgeList, 1);
-
-    b = [];
-
-    for i = 1:numEdges
-        vertex1 = edgeList(i, 1);
-        vertex2 = edgeList(i, 2);
-        if i <= nNodes
-            b(end+1) = edgeList(i,3); %taking supply vector (c)
-        else
-            b(end+1) = edgeList(i,4); %taking vector of costs (b)
-        end
-        adjacencyMatrix(vertex1, vertex2) = adjacencyMatrix(vertex1, vertex2) + 1;
-    end
 end
 
 function [indidenceMatrix] = createIncidenceMatrix(graph)
