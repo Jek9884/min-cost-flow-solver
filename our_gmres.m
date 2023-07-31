@@ -40,7 +40,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
   dim = size(D,1)+size(E,1);
 
   % Initialization
-  patient_tol = 1e-10; 
+  patient_tol = 1e-16;
   patient = 0;
   sn = zeros(dim, 1); cs = zeros(dim, 1); % Instead of saving the whole rotation matrix, we save only the coefficients.
   e1 = zeros(dim, 1);     
@@ -93,7 +93,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
     else
         patient = 0;
     end
-    if patient >= 3
+    if patient >= 10
         break_flag = 1;
         break;
     end
@@ -110,7 +110,17 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
   end
 
   y = H(1:k, 1:k) \ e(1:k);            
-  x = starting_point + Q(:, 1:k) * y;   
+  y = starting_point + Q(:, 1:k) * y; 
+
+  % Compute the final solution as x=R^{-1}*y
+  if ~isnan(S) 
+    m = size(D,1);
+    x1 = y(1:m);
+    x2 = y(m+1:end);
+    x = [D_chol .\ x1 ; S \ x2];
+  else
+    x = y;
+  end
 
   if debug
     fprintf("The algorithm ends with %d iterations, the break_flag is %d\n", k, break_flag);
@@ -169,6 +179,7 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
   end
   v = v / h(k + 1);
 end
+
 
 %
 % This function applies the previous rotations to the newly computed column 

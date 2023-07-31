@@ -56,7 +56,7 @@ disp("VERSIONE FAST CON PRECONDITIONING")
 total_time = 0;
 for trial=1:trials
     tic;
-    [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_point, threshold, reorth_flag, true);
+    [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_point, threshold, reorth_flag, false);
     trial_time = toc;
     total_time = total_time + trial_time;
     fprintf("Trial: %d | Res. Rel: %e | Iter: %d | Trial time : %f\n", trial, r_rel, k, trial_time);
