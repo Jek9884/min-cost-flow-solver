@@ -1,5 +1,5 @@
 path_to_root = "../../../";
-experiment_title = "exp_3";
+experiment_title = "exp_5";
 addpath(path_to_root)
 format long;
 seed = 42;
@@ -14,29 +14,29 @@ fprintf(fileID, "file_name;cond;det;our relative residual;our number of iteratio
 for i = 1:length(filenames)
     filename = filenames(i);
     [E, D, b] = utility_read_matrix(filename, seed, debug);
+    [S, P] = create_preconditioner(D,E);
     starting_point  = b;
     
     [A,c,d] = calculate_det_and_cond(D,E);
     residuals = {};
 
     tic;
-    [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, NaN, b, starting_point, threshold, true, debug);
+    [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, S, b, starting_point, threshold, true, debug);
     our_time = toc;
 
     residuals{1} = our_res_vec;
 
     dim = size(D, 1) + size(E, 1);
     
-    fake_precond = eye(size(A)); %This is needed just to pass x0=starting_point.
     tic;
-    [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, fake_precond,fake_precond,starting_point);
+    [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, P',P, b);
     gmres_time = toc;
     gmres_k = gmres_n_iter(2);
 
     residuals{2} = res_vec/norm(b);
 
     tic;
-    [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, fake_precond,fake_precond,starting_point);
+    [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, P',P, b);
     minres_time = toc;
 
     residuals{3} = res_vec/norm(b);
@@ -68,11 +68,8 @@ function plot_res(residuals, filename, threshold)
        p = semilogy(cell2mat(residuals(i)), 'LineWidth',2);
        p.Color = colors(i);
     end
-
     yline(threshold,'--','Threshold','LineWidth',3);
     legend(["Our method","MATLAB GMRES","MATLAB MINRES"]);
-
-
     xlabel('iteration');
     ylabel('residual');
     hold off;

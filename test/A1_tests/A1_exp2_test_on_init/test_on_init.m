@@ -3,7 +3,7 @@ experiment_title = "exp_2";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames = [path_to_root+"graphs/net8_8_3.dmx"];
+filenames = [path_to_root+"graphs/net10_8_3.dmx"];
 reorth_flag = true;
 init_mode = ["random", "random_between_interval","identity","2_dist_eig","5_dist_eig","ill-conditioned","all_diff"];
 colors = ["#0072BD","#D95319","#EDB120","#7E2F8E","#77AC30","#4DBEEE","#A2142F"];
@@ -37,19 +37,20 @@ for j = 1:length(filenames)
         tmp = split(name, '.');
         name = tmp(1);
         plot_file_name = experiment_title+"_"+name+"_"+init_mode(i)+".png";
-        plot_res(residuals,colors(i), plot_file_name);
+        plot_res(residuals,colors(i), plot_file_name,threshold);
     end
 
 end
 
 fclose(fileID);
 
-function plot_res(residuals, color, filename)
+function plot_res(residuals, color, filename,threshold)
     figure;
     p = semilogy(residuals, 'LineWidth',2);
     p.Color=color;
     xlabel('iteration');
     ylabel('residual');
+    yline(threshold,'--','Threshold','LineWidth',3);
     if ~isempty(filename)
         saveas(gcf, filename);
     end

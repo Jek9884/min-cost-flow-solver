@@ -3,7 +3,7 @@ experiment_title = "exp_1";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames       = ["graphs/net8_8_3.dmx"];% ,"graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net14_8_3.dmx"];
+filenames       = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net14_8_3.dmx"];
 reorth_flags    = [false, true];
 threshold       = 1e-10;
 debug           = false;
@@ -38,12 +38,12 @@ for i = 1:length(filenames)
     end
     
     plot_file_name = experiment_title+"_"+name+".png";
-    plot_res(res_history,plot_file_name);
+    plot_res(res_history,plot_file_name, threshold);
 end
 
 fclose(fileID);
 
-function plot_res(residuals, filename)
+function plot_res(residuals, filename, threshold)
     colors = ["#D95319", "#4DBEEE"];
     figure;
 
@@ -55,6 +55,7 @@ function plot_res(residuals, filename)
        p = semilogy(cell2mat(residuals(i)), 'LineWidth',2);
        p.Color = colors(i);
     end
+    yline(threshold,'--','Threshold','LineWidth',3);
     legend(["Without reorth.","With reorth."]);
     xlabel('iteration');
     ylabel('residual');

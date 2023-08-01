@@ -3,7 +3,7 @@ experiment_title = "exp_4";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames       = ["graphs/net10_8_3.dmx"];% ,"graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net14_8_3.dmx"];
+filenames       = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net14_8_3.dmx"];
 reorth_flags    = [false, true];
 threshold       = 1e-10;
 debug           = false;
@@ -14,13 +14,12 @@ fileID = fopen(file_path, 'w');
 fprintf(fileID, "file_name;cond;det;precond;reorth;relative residual;number of iterations;time\n");
 
 for i = 1:length(filenames)
-    
     [E, D, b] = utility_read_matrix(path_to_root+filenames(i), seed, debug);
     [S, P] = create_preconditioner(D,E);
     [c,d] = calculate_det_and_cond(D,E);
     starting_point = b;
 
-    string_list = split(filename, "/");
+    string_list = split(filenames(i), "/");
     name = string_list(end);
     tmp = split(name, '.');
     name = tmp(1);
@@ -42,12 +41,12 @@ for i = 1:length(filenames)
     end
 
     plot_file_name = experiment_title+"_"+name+"_"+".png";
-    plot_res(res_history,plot_file_name);
+    plot_res(res_history,plot_file_name, threshold);
 end
 
 fclose(fileID);
 
-function plot_res(residuals, filename)
+function plot_res(residuals, filename, threshold)
     colors = ["#0072BD","#D95319","#EDB120", "#4DBEEE"];
     figure;
 
@@ -59,6 +58,12 @@ function plot_res(residuals, filename)
        p = semilogy(cell2mat(residuals(i)), 'LineWidth',2);
        p.Color = colors(i);
     end
+
+    yline(threshold,'--','Threshold','LineWidth',3);
+
+    xlabel('iteration');
+    ylabel('residual');
+
     legend(["No precond. without reorth.","Precond. without reorth.","No precond. with reorth.","Precond. with reorth."]);
     hold off;
     if ~isempty(filename)
