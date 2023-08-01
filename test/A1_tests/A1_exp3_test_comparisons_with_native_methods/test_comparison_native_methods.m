@@ -3,7 +3,7 @@ experiment_title = "exp_3";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames = [path_to_root+"graphs/net8_8_1.dmx",path_to_root+"graphs/net8_8_2.dmx",path_to_root+"graphs/net8_8_3.dmx"];%, "../graphs/net10_8_3.dmx", "../graphs/net14_64_1.dmx"];
+filenames = [path_to_root+"graphs/net8_8_1.dmx"];%,path_to_root+"graphs/net8_8_2.dmx",path_to_root+"graphs/net8_8_3.dmx"];%, ,"graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net14_8_3.dmx"];
 threshold = 1e-10;
 debug = false;
 
@@ -23,7 +23,7 @@ for i = 1:length(filenames)
     [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, NaN, b, starting_point, threshold, true, debug);
     our_time = toc;
 
-    residuals{1} = our_res_vec;
+    residuals{1} = our_res_vec(4:end);
 
     dim = size(D, 1) + size(E, 1);
     
@@ -32,13 +32,13 @@ for i = 1:length(filenames)
     gmres_time = toc;
     gmres_k = gmres_n_iter(2);
 
-    residuals{2} = res_vec/norm(b);
+    residuals{2} = res_vec(4:end)/norm(b);
 
     tic;
     [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim);
     minres_time = toc;
 
-    residuals{3} = res_vec/norm(b);
+    residuals{3} = res_vec(4:end)/norm(b);
     
 
     string_list = split(filename, "/");
@@ -46,7 +46,7 @@ for i = 1:length(filenames)
     tmp = split(name, '.');
     name = tmp(1);
     plot_file_name = experiment_title+"_"+name+"_"+"comparison_with_native_methods.png";
-    plot_res(residuals, "the_plot.png");
+    plot_res(residuals, plot_file_name);
    
     fprintf(fileID,"%s;%e;%e;%e;%d;%f;%e;%d;%f;%e;%d;%f;\n", name,c,d, our_r_rel, our_k, our_time, ...
                     gmres_r_rel, gmres_k, gmres_time, ...
@@ -56,24 +56,19 @@ end
 fclose(fileID);
 
 function plot_res(residuals, filename)
-    tiledlayout(1,3);
- 
-    nexttile;
-    semilogy(residuals{1});
-    title("Our implementation");
-    nexttile;
-    semilogy(residuals{2});
-    title("Native GMRES");
-    nexttile;
-    semilogy(residuals{3});
-    title("Native MINRES");
-    
+    colors = ["#0072BD","#D95319","#EDB120"];
+    figure;
+    semilogy(cell2mat(residuals(1)), 'LineWidth',2);
+    hold on;
+    for i =2:numel(residuals)
+       semilogy(cell2mat(residuals(i)), 'LineWidth',2);
+    end
+    legend(["Our method","MATLAB GMRES","MATLAB MINRES"]);
+    hold off;
     if ~isempty(filename)
         saveas(gcf, filename);
     end
-
 end
-
 
 function [A, c,d] = calculate_det_and_cond(D,E)
     dim = size(D, 1) + size(E, 1);

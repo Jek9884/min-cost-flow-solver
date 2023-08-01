@@ -1,2 +1,2 @@
 file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;MINRES time;GMRES relative residual;MINRES number of iterations;MINRES time
-net8_8_1;4.507837e+02;-0.000000e+00;9.676440e-11;527;4.042029;9.538660e-11;528;2.409402;9.829305e-11;649;1.293535;
+net8_8_1;4.507837e+02;-0.000000e+00;9.676440e-11;527;3.770828;9.538660e-11;528;2.443125;9.829305e-11;649;1.834335;

@@ -6,6 +6,7 @@ seed = 42;
 filenames = [path_to_root+"graphs/net8_8_3.dmx"];
 reorth_flag = true;
 init_mode = ["random", "random_between_interval","identity","2_dist_eig","5_dist_eig","ill-conditioned","all_diff"];
+colors = ["#0072BD","#D95319","#EDB120","#7E2F8E","#77AC30","#4DBEEE","#A2142F"];
 threshold = 1e-10;
 debug = false;
 
@@ -30,23 +31,25 @@ for j = 1:length(filenames)
         execution_time = toc;
         
         fprintf(fileID,"%s;%e;%e;%e;%d;%e\n",init_mode(i),c,d,r_rel, k,execution_time);
-    
+
         string_list = split(filename, "/");
         name = string_list(end);
         tmp = split(name, '.');
         name = tmp(1);
         plot_file_name = experiment_title+"_"+name+"_"+init_mode(i)+".png";
-        plot_res(residuals, plot_file_name);
-
-        
+        plot_res(residuals,colors(i), plot_file_name);
     end
+
 end
 
 fclose(fileID);
 
-function plot_res(residuals, filename)
+function plot_res(residuals, color, filename)
     figure;
-    semilogy(residuals);
+    p = semilogy(residuals, 'LineWidth',2);
+    p.Color=color;
+    xlabel('iteration');
+    ylabel('residual');
     if ~isempty(filename)
         saveas(gcf, filename);
     end
@@ -85,7 +88,7 @@ function [D] = init_D(dim, mode)
     end
 end
 
-function [c,d] = (D,E)
+function [c,d] = calculate_det_and_cond(D,E)
     dim = size(D, 1) + size(E, 1);
 
     A = zeros(dim, dim);
