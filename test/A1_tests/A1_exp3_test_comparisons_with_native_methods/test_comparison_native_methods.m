@@ -6,39 +6,55 @@ seed = 42;
 filenames = [path_to_root+"graphs/net8_8_3.dmx", path_to_root+"graphs/net10_8_3.dmx", path_to_root+"graphs/net12_8_3.dmx"];
 threshold = 1e-10;
 debug = false;
+trials = 5;
 
 file_path = experiment_title+"_results.csv";
 fileID = fopen(file_path, 'w');
-fprintf(fileID, "file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;MINRES time;GMRES relative residual;MINRES number of iterations;MINRES time\n");
-
+fprintf(fileID, "file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;GMRES time;MINRES relative residual;MINRES number of iterations;MINRES time\n");
 for i = 1:length(filenames)
     filename = filenames(i);
-    [E, D, b] = utility_read_matrix(filename, seed, debug);
-    starting_point  = b;
-    
+
+    [E, ~, b] = utility_read_matrix(filename, seed, debug);
+    D = ones(size(E, 2),1);
+
     [A,c,d] = calculate_det_and_cond(D,E);
+    starting_point  = b;
+
     residuals = {};
 
-    tic;
-    [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, NaN, b, starting_point, threshold, true, debug);
-    our_time = toc;
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, our_r_rel, our_res_vec, ~, our_k] = our_gmres(D, E, NaN, b, starting_point, threshold, true, debug);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    our_time = total_time/trials;
 
     residuals{1} = our_res_vec;
 
     dim = size(D, 1) + size(E, 1);
-    
     fake_precond = eye(size(A)); %This is needed just to pass x0=starting_point.
-    tic;
-    [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, fake_precond,fake_precond,starting_point);
-    gmres_time = toc;
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, fake_precond,fake_precond,starting_point);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    gmres_time = total_time/trials;
     gmres_k = gmres_n_iter(2);
 
     residuals{2} = res_vec/norm(b);
 
-    tic;
-    [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, fake_precond,fake_precond,starting_point);
-    minres_time = toc;
-
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, fake_precond,fake_precond,starting_point);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    minres_time = total_time/trials;
     residuals{3} = res_vec/norm(b);
     
 
