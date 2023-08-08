@@ -14,8 +14,10 @@ fileID = fopen(file_path, 'w');
 fprintf(fileID, "file_name;cond;det;precond;reorth;relative residual;number of iterations;time\n");
 
 for i = 1:length(filenames)
-    [E, D, b] = utility_read_matrix(path_to_root+filenames(i), seed, debug);
-    [S, P] = create_preconditioner(D,E);
+    [E, ~, b] = utility_read_matrix(path_to_root+filenames(i), seed, debug);
+    D = ones(size(E, 2),1);
+
+    [S, P] = create_preconditioner(D,E); 
     [c,d] = calculate_det_and_cond(D,E);
     starting_point = b;
 
