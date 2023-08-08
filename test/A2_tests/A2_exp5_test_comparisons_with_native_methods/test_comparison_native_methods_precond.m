@@ -3,7 +3,7 @@ experiment_title = "exp_5";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames = [path_to_root+"graphs/net8_8_3.dmx", path_to_root+"graphs/net10_8_3.dmx", path_to_root+"graphs/net12_8_3.dmx"];
+filenames = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx"];
 threshold = 1e-10;
 debug = false;
 
@@ -13,7 +13,8 @@ fprintf(fileID, "file_name;cond;det;our relative residual;our number of iteratio
 
 for i = 1:length(filenames)
     filename = filenames(i);
-    [E, D, b] = utility_read_matrix(filename, seed, debug);
+    [E, ~, b] = utility_read_matrix(path_to_root+filename, seed, debug);
+    D = ones(size(E,2), 1);
     [S, P] = create_preconditioner(D,E);
     starting_point  = b;
     
@@ -53,7 +54,6 @@ for i = 1:length(filenames)
                     gmres_r_rel, gmres_k, gmres_time, ...
                     minres_r_rel, minres_n_iter, minres_time);
 end
-
 fclose(fileID);
 
 function plot_res(residuals, filename, threshold)
