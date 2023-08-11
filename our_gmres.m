@@ -3,12 +3,26 @@
 % structure:
 %       J =   ⎡ D  E' ⎤
 %             ⎣ E  0  ⎦
-% where D is a vector ...
-%       E is a matrix ...
+% where D is the vector containing the diagonal elements of the top-left block of J,
+%       E is the bottom-left block of J.
+%
+% The algorithm supports the preconditioning where the preconditioning matrix is defined as:
+%       P =   ⎡ D   0 ⎤
+%             ⎣ 0  -S ⎦
+% where S is the Shur complement matrix and it is defined as : S = E * D^{-1} * E'.
+%
+% The preconditioning matrix is factorized with the Incomplete Cholesky factorization 
+% and the preconditioning is applied to the system as follows:
+%                           R^{-T} J R^{-1} Rx = R^{-T} b
+% where R is the Incomplete Cholesky factorization of P.
+% It is worth noting that the preconditioning matrix is not explicitly computed but block operations are used instead.
+%
+%
 %
 % Input: D - the original diagonal vector
 %        E - the original E matrix
-%        P - the (optional) preconditioner matrix - set to NaN if not used
+%        S - the (optional) Shur complement matrix factorized with the Incomplete Cholesky factorization 
+%              - set to NaN if preconditioning is not required
 %        b - the original b vector
 %        starting_point - the starting point of the algorithm
 %        threshold - the threshold to stop the algorithm
@@ -25,6 +39,10 @@
 %                     -1 - the algorithm did not converge
 %         k - the number of iterations
 %
+%
+% Authors: 
+%   - Gennaro Daniele Acciaro
+%   - Alessandro Capurso 
 function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_point, threshold, reorth_flag, debug)
 
   % Checks on the input parameters
@@ -49,7 +67,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   b_norm = norm(b);
   if ~isnan(S)
-    D_chol = sqrt(sparse(D));%ichol(sparse(diag(D)));
+    D_chol = sqrt(sparse(D)); % since D is diagonal, it is equivalent and faster than ichol(sparse(diag(D)));
   else
     D_chol = NaN;
   end
@@ -83,7 +101,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
     residuals(end+1) = r_rel;
 
-    if abs(r_rel) < threshold                         % Convergence check
+    if abs(r_rel) < threshold                        % Convergence check
         break_flag = 0;
         break;
     end
@@ -133,13 +151,15 @@ end
 %
 % Input: D - the original diagonal vector
 %        E - the original E matrix
-%        S - TODO
-%        Q - TODO
+%        S - the Shur complement matrix
+%        D_chol - the Cholesky factorization of the diagonal matrix D
+%        Q - the matrix Q of the Lanczos algorithm
 %        k - the index of the column to be computed
 %        reorth_flag - this flag is used to decide if the reorthogonalization is needed
 %
-% Output: h - TODO
-%         v - TODO
+% Output: h - the new column of the Hessenberg matrix H
+%         v - the new column of the matrix Q
+%         is_breakdown_happened - this flag is used to indicate if the breakdown happened
 %
 function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_flag)
   q1 = Q(1:size(D,1), k);
@@ -158,7 +178,7 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
      B22 = S' \ B21;
     
      v = [B12; B22];
-
+    
   else
      v = [(D.*q1)+(E'*q2); E*q1];
   end
@@ -168,30 +188,30 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
     v = v - h(i) * Q(:, i);
   end
 
-  if reorth_flag            % Apply reorthogonalization twice, if necessary
+  if reorth_flag             % Apply reorthogonalization twice, if necessary
     v = v - Q*(Q'*v);
     v = v - Q*(Q'*v);
   end
 
   h(k + 1) = norm(v);
-  if abs(h(k + 1)) <= 1e-16                               % Lucky breakdown
+  if abs(h(k + 1)) <= 1e-16                                % Lucky breakdown
       is_breakdown_happened = true;
   end
   v = v / h(k + 1);
 end
 
-
 %
 % This function applies the previous rotations to the newly computed column 
 %
-% Input: h - TODO
+% Input: h - the k-th column of Hn to be rotated
 %        k - the index of the column to be computed
 %        cs, sn - coefficients of the previous rotations
 %
 % Output: h - updated vector 
 %
 function h = apply_old_rotations(h, k, cs, sn)
-  % Rotations are computed only on the last items of the vector, since TODO 
+  % Rotations are computed only on the last items of the vector, since the previous ones are zero
+
   for i = max(1,k-2):k-1
     temp   =  cs(i) * h(i) + sn(i) * h(i + 1);
     h(i+1) = -sn(i) * h(i) + cs(i) * h(i + 1);
@@ -199,6 +219,7 @@ function h = apply_old_rotations(h, k, cs, sn)
   end
 end
 
+%
 % This function applies the current rotation to the newly computed column
 %
 % Input: h - the vector to be rotated
@@ -222,7 +243,7 @@ function [h, e, cs_k, sn_k] = apply_current_rotation(h,e,k)
 end
 
 % 
-% This function computes the coefficients of the Givens rotation matrix
+% This function computes the coefficient s of the Givens rotation matrix
 % that zeros the j-th component of the vector v.
 %
 % Input: v    - vector of size 2
@@ -243,7 +264,8 @@ end
 %
 % Input: D - the original diagonal vector
 %        E - the original E matrix
-%        S - TODO
+%        S - the Shur complement matrix
+%        D_chol - the Cholesky factorization of the diagonal matrix D
 %        b - the original b vector
 %        input_vector - the vector on which the residual is computed
 %
