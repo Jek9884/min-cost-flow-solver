@@ -26,12 +26,10 @@
 ```math
 \begin{bmatrix}D & E^T\\ E & 0\end{bmatrix}\begin{bmatrix}x \\ y\end{bmatrix} = \begin{bmatrix}b \\ c\end{bmatrix}
 ```
-
-where $D \in R^{m\times m}$ is a diagonal positive definite matrix (i.e., $D=diag(D)>0$) and $E \in R^{(n-1)\times m}$ is obtained by removing the last row from the node-arc incidence matrix of a given connected directed **graph**. 
-
+where $D \in R^{m\times m}$ is a diagonal positive definite matrix (i.e.,  $D=diag(D)>0$ ) and $E \in R^{(n-1)\times m}$ is obtained by removing the last row from the node-arc incidence matrix of a given connected directed **graph**.
 These problems arise as the KKT system of the convex quadratic separable Min-Cost Flow Problem, hence you can look, e.g., [here](https://commalab.di.unipi.it/datasets/mcf) for ways to generate meaningful instances of the problem.
 
-(A1) is GMRES, and you must solve the internal problems $\min \; || H_ny-||b||e_1||$ by updating the QR factorization of $H_n$ at each step: given the QR factorization of  $H_{n-1}$ computed at the previous step, apply one more orthogonal transformation to compute that of $H_n$ .
+(A1) is GMRES, and you must solve the internal problems $\min \; || H_ny-||b||e_1||$ by updating the QR factorization of $H_n$ at each step: given the QR factorization of  $H_{n-1}$  computed at the previous step, apply one more orthogonal transformation to compute that of $H_n$.
 
 (A2) is the same GMRES, but using the so-called *Schur complement preconditioner*
 
@@ -39,7 +37,7 @@ These problems arise as the KKT system of the convex quadratic separable Min-Cos
 P= \begin{bmatrix}D & 0\\ 0 & -S\end{bmatrix}
 ```
 
-where $S$ is either $S=-ED^{-1}E^T$ or a sparse approximation of it (to obtain it, for instance, replace the smallest off-diagonal entries of $S$ with zeros). P must be factorized with Incomplete Cholesky factorization.
+where $S$ is either $S=-ED^{-1}E^T$ or a sparse approximation of it (to obtain it, for instance, replace the smallest off-diagonal entries of $S$ with zeros). $P$ must be factorized with Incomplete Cholesky factorization.
 
 No off-the-shelf solvers allowed.
 
@@ -69,7 +67,7 @@ In order to use the algorithm, you need to call the function `our_gmres` in the 
             k - the number of iterations
 
 ## 🧪 Tests
-To check the correctness and the performances of the algorithm, a suite of test is provided. In order to run the tests, you need to call the function `run_everything` in the following way:
+To check the correctness and the performance of the algorithm, a suite of tests is provided. In order to run the tests, you need to call the function `run_everything` in the following way:
 
     test/run_everything.m
 
