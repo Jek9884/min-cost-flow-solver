@@ -17,19 +17,15 @@
     <p align="center">
     <h3><a href="./report.pdf"> 📃 Report</a></h3>
   </p>
-    <!-- <p align="center">
-            <h3><a href="./slides.pdf">Slides</a></h3>
-          </p>
-        -->
 </div>
 
 ## 🔍 Problem description
 ###### This project relies on solving the following problems:
 (P) is a sparse linear system of the form
 
-$$
+```math
 \begin{bmatrix}D & E^T\\ E & 0\end{bmatrix}\begin{bmatrix}x \\ y\end{bmatrix} = \begin{bmatrix}b \\ c\end{bmatrix}
-$$
+```
 
 where $D \in R^{m\times m}$ is a diagonal positive definite matrix (i.e., $D=diag(D)>0$) and $E \in R^{(n-1)\times m}$ is obtained by removing the last row from the node-arc incidence matrix of a given connected directed **graph**. 
 
@@ -39,9 +35,9 @@ These problems arise as the KKT system of the convex quadratic separable Min-Cos
 
 (A2) is the same GMRES, but using the so-called *Schur complement preconditioner*
 
-$$
+```math
 P= \begin{bmatrix}D & 0\\ 0 & -S\end{bmatrix}
-$$
+```
 
 where $S$ is either $S=-ED^{-1}E^T$ or a sparse approximation of it (to obtain it, for instance, replace the smallest off-diagonal entries of $S$ with zeros). P must be factorized with Incomplete Cholesky factorization.
 
@@ -79,7 +75,7 @@ To check the correctness and the performances of the algorithm, a suite of test 
 
 The results (.csv and plots) of the tests are stored in their corresponding folders.
 
-### 🗃️ Main Files
+## 🗃️ Main Files
 
     📦 
      ┣ 📂 graphs       
