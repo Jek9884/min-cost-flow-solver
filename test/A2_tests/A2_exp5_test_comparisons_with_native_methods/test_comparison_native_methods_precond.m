@@ -6,6 +6,7 @@ seed = 42;
 filenames = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx"];
 threshold = 1e-10;
 debug = false;
+trials = 5;
 
 file_path = experiment_title+"_results.csv";
 fileID = fopen(file_path, 'w');
@@ -21,24 +22,39 @@ for i = 1:length(filenames)
     [A,c,d] = calculate_det_and_cond(D,E);
     residuals = {};
 
-    tic;
-    [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, S, b, starting_point, threshold, true, debug);
-    our_time = toc;
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, our_r_rel, our_res_vec, break_flag, our_k] = our_gmres(D, E, S, b, starting_point, threshold, true, debug);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    our_time = total_time/trials;
 
     residuals{1} = our_res_vec;
 
     dim = size(D, 1) + size(E, 1);
     
-    tic;
-    [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, P',P, b);
-    gmres_time = toc;
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, ~, gmres_r_rel, gmres_n_iter, res_vec] = gmres(A, b, [], threshold, dim, P',P,starting_point);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    gmres_time = total_time/trials;
     gmres_k = gmres_n_iter(2);
 
     residuals{2} = res_vec/norm(b);
 
-    tic;
-    [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, P',P, b);
-    minres_time = toc;
+    total_time = 0;
+    for trial=1:trials
+        tic;
+        [~, ~, minres_r_rel, minres_n_iter, res_vec] = minres(A, b, threshold, dim, P',P,starting_point);
+        trial_time = toc;
+        total_time = total_time + trial_time;
+    end
+    minres_time = total_time/trials;
 
     residuals{3} = res_vec/norm(b);
     
