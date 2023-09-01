@@ -4,6 +4,7 @@ function [E, D, b] = utility_read_matrix(filename, seed, debug)
     graph = readDimacsFile(filename);
 
     E = createIncidenceMatrix(graph);
+    E = sparse(E);
 
     % Dimension of diagonal block
     m = size(E,2); 
