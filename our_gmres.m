@@ -168,7 +168,7 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
 
   if ~isnan(S)
 
-     B1 = D_chol .\ q1;
+     B1 = D_chol .\ q1; 
      B2 = S \ q2;
     
      B11 = (D .* B1) + (E' * B2);
@@ -180,7 +180,11 @@ function [h, v, is_breakdown_happened] = lanczos(D, E, S, D_chol, Q, k, reorth_f
      v = [B12; B22];
     
   else
-     v = [(D.*q1)+(E'*q2); E*q1];
+     B1 = (D.*q1); 
+     B2 = (E'*q2);
+     B12 = B1+B2;
+     B3 = E*q1;
+     v = [B12; B3];
   end
 
   for i = max(1,k-2):k    
@@ -281,7 +285,7 @@ function r = calculate_the_residual_optimized(D, E, S, D_chol, b, input_vector)
   if ~isnan(S) 
      
      B1 = D_chol .\ part_1;
-     B2 = S \ part_2;
+     B2 = S \ part_2; 
     
      B11 = (D .* B1) + (E' * B2);
      B21 = E * B1;
