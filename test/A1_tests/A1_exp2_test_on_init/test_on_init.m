@@ -3,7 +3,7 @@ experiment_title = "exp_2";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames = [path_to_root+"graphs/net10_8_3.dmx"];
+filenames = ["graphs/net10_8_3.dmx"];
 reorth_flag = true;
 init_mode = ["random", "random_between_interval","identity","2_dist_eig","5_dist_eig","all_diff"];
 colors = ["#0072BD","#D95319","#EDB120","#7E2F8E","#77AC30","#4DBEEE","#A2142F"];
@@ -18,7 +18,7 @@ for j = 1:length(filenames)
     filename = filenames(j);
     for i = 1:length(init_mode)
         
-        [E, ~, b] = utility_read_matrix(filename, seed, debug);
+        [E, ~, b] = utility_read_matrix(path_to_root+filename, seed, debug);
     
         D = init_D(size(E,2), init_mode(i));
 

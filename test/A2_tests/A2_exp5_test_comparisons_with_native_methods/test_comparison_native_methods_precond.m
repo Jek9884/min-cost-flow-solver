@@ -10,16 +10,19 @@ trials = 5;
 
 file_path = experiment_title+"_results.csv";
 fileID = fopen(file_path, 'w');
-fprintf(fileID, "file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;MINRES time;GMRES relative residual;MINRES number of iterations;MINRES time\n");
+fprintf(fileID, "file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;MINRES time;GMRES relative residual;MINRES number of iterations;MINRES time;  creation time of S;\n");
 
 for i = 1:length(filenames)
     filename = filenames(i);
     [E, ~, b] = utility_read_matrix(path_to_root+filename, seed, debug);
+    
     D = ones(size(E,2), 1);
-    [S, P] = create_preconditioner(D,E);
+    
+    [S, P, total_time_S] = create_preconditioner(D,E); 
     starting_point  = b;
     
     [A,c,d] = calculate_det_and_cond(D,E);
+    A = sparse(A);
     residuals = {};
 
     total_time = 0;
@@ -66,9 +69,9 @@ for i = 1:length(filenames)
     plot_file_name = experiment_title+"_"+name+"_"+"comparison_with_native_methods.png";
     plot_res(residuals, plot_file_name, threshold);
    
-    fprintf(fileID,"%s;%e;%e;%e;%d;%f;%e;%d;%f;%e;%d;%f;\n", name,c,d, our_r_rel, our_k, our_time, ...
+    fprintf(fileID,"%s;%e;%e;%e;%d;%f;%e;%d;%f;%e;%d;%f;%f;\n", name,c,d, our_r_rel, our_k, our_time, ...
                     gmres_r_rel, gmres_k, gmres_time, ...
-                    minres_r_rel, minres_n_iter, minres_time);
+                    minres_r_rel, minres_n_iter, minres_time, total_time_S);
 end
 fclose(fileID);
 

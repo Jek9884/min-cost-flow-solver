@@ -12,8 +12,10 @@ A = zeros(dim, dim);
 A(1:size(D, 1), 1:size(D, 1)) = diag(D);
 A(size(D, 1)+1:end, 1:size(E, 2)) = E;
 A(1:size(D, 1), size(E, 2)+1:end) = E';
+A = sparse(A);
 
-[S, P] = create_preconditioner(D,E);
+[S, P, creation_time_S] = create_preconditioner(D,E);
+disp(creation_time_S);
 
 % ==================== 
 trials = 1;

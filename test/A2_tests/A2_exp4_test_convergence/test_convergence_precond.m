@@ -11,14 +11,14 @@ colors          = ["#0072BD","#D95319"];
 
 file_path = experiment_title+"_results.csv";
 fileID = fopen(file_path, 'w');
-fprintf(fileID, "file_name;cond;det;precond;reorth;relative residual;number of iterations;time\n");
+fprintf(fileID, "file_name;cond;det;precond;reorth;relative residual;number of iterations;execution time; creation time of S;\n");
 
 for i = 1:length(filenames)
     [E, ~, b] = utility_read_matrix(path_to_root+filenames(i), seed, debug);
     D = ones(size(E, 2),1);
 
-    [S, P] = create_preconditioner(D,E); 
-    [c,d] = calculate_det_and_cond(D,E);
+    [S, ~, total_time_S] = create_preconditioner(D,E); 
+    [c, d] = calculate_det_and_cond(D,E);
     starting_point = b;
 
     string_list = split(filenames(i), "/");
@@ -38,8 +38,8 @@ for i = 1:length(filenames)
         precond_execution_time = toc;
         res_history{end+1} = precond_residuals;
 
-        fprintf(fileID,"%s;%e;%e;%d;%d;%e;%d;%f\n", name, c, d, 0, reorth_flags(j), r_rel, k,execution_time);
-        fprintf(fileID,"%s;%e;%e;%d;%d;%e;%d;%f\n", name, c, d, 1, reorth_flags(j), precond_r_rel, precond_k, precond_execution_time);
+        fprintf(fileID,"%s;%e;%e;%d;%d;%e;%d;%f;%f\n", name, c, d, 0, reorth_flags(j), r_rel, k,execution_time, 0);
+        fprintf(fileID,"%s;%e;%e;%d;%d;%e;%d;%f;%f\n", name, c, d, 1, reorth_flags(j), precond_r_rel, precond_k, precond_execution_time,total_time_S );
     end
 
     plot_file_name = experiment_title+"_"+name+"_"+".png";
