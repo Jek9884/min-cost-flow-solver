@@ -3,7 +3,7 @@ experiment_title = "exp_4";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames       = ["graphs/net8_8_3.dmx"];%;, "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", "graphs/net10_64_3.dmx", ];
+filenames       = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx" ];
 reorth_flags    = [false, true];
 threshold       = 1e-10;
 debug           = false;
