@@ -3,7 +3,7 @@ experiment_title = "exp_5";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx"];
+filenames = ["graphs/net8_8_3.dmx"];%, "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx"];
 threshold = 1e-10;
 debug = false;
 trials = 5;
@@ -19,6 +19,7 @@ for i = 1:length(filenames)
     D = ones(size(E,2), 1);
     
     [S, P, total_time_S] = create_preconditioner(D,E); 
+    S = sparse(S);
     starting_point  = b;
     
     [A,c,d] = calculate_det_and_cond(D,E);

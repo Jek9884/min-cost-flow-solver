@@ -1,9 +1,9 @@
 function run_everything()
     send_message("==== Start Experiments on A1 ====");
-    %folder = 'A1_tests';
-    %recursive_read_folder(folder)
-    %bashScriptPath = 'A1_sender.sh';
-    %system(['bash ' bashScriptPath]);
+    folder = 'A1_tests';
+    recursive_read_folder(folder)
+    bashScriptPath = 'A1_sender.sh';
+    system(['bash ' bashScriptPath]);
     
     send_message("==== Start Experiments on A2 ====");
     folder = 'A2_tests';

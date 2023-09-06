@@ -5,7 +5,7 @@ format long;
 seed = 42;
 filenames = ["graphs/net10_8_3.dmx"];
 reorth_flag = true;
-init_mode = ["random", "random_between_interval","identity","2_dist_eig","5_dist_eig","all_diff"];
+init_mode = ["random"];%, "random_between_interval","identity","2_dist_eig","5_dist_eig","all_diff"];
 colors = ["#0072BD","#D95319","#EDB120","#7E2F8E","#77AC30","#4DBEEE","#A2142F"];
 threshold = 1e-10;
 debug = false;
