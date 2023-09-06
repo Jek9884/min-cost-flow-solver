@@ -15,6 +15,7 @@ A(1:size(D, 1), size(E, 2)+1:end) = E';
 A = sparse(A);
 
 [S, P, creation_time_S] = create_preconditioner(D,E);
+S = sparse(S);
 disp(creation_time_S);
 
 % ==================== 

@@ -67,6 +67,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   b_norm = norm(b);
   if ~isnan(S)
+    S = ichol(-S);
     D_chol = sqrt(sparse(D)); % since D is diagonal, it is equivalent and faster than ichol(sparse(diag(D)));
   else
     D_chol = NaN;
