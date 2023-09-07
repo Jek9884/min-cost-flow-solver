@@ -37,7 +37,7 @@ These problems arise as the KKT system of the convex quadratic separable Min-Cos
 P= \begin{bmatrix}D & 0\\ 0 & -S\end{bmatrix}
 ```
 
-where $S$ is either $S=-ED^{-1}E^T$ or a sparse approximation of it (to obtain it, for instance, replace the smallest off-diagonal entries of $S$ with zeros). $P$ must be factorized with Incomplete Cholesky factorization.
+where $S$ is either $S=-ED^{-1}E^T$ or a sparse approximation of it (to obtain it, for instance, replace the smallest off-diagonal entries of $S$ with zeros). $P$ must be factorized with Incomplete Cholesky factorization.
 
 No off-the-shelf solvers allowed.
 
