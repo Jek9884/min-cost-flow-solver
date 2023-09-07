@@ -3,8 +3,8 @@ experiment_title = "exp_4";
 addpath(path_to_root)
 format long;
 seed = 42;
-filenames       = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx" ];
-reorth_flags    = [false, true];
+filenames       = ["graphs/net8_8_3.dmx", "graphs/net10_8_3.dmx", "graphs/net12_8_3.dmx", ];
+reorth_flags    = [true];
 threshold       = 1e-10;
 debug           = false;
 colors          = ["#0072BD","#D95319"];
@@ -67,7 +67,7 @@ function plot_res(residuals, filename, threshold)
     xlabel('iteration');
     ylabel('residual');
 
-    legend(["No precond. without reorth.","Precond. without reorth.","No precond. with reorth.","Precond. with reorth."]);
+    legend(["No precond.","Precond."]);
     hold off;
     if ~isempty(filename)
         saveas(gcf, filename);
