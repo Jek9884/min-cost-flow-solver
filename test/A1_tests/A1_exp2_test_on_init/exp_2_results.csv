@@ -1,7 +1,0 @@
-mode;cond;det;relative residual;number of iterations;time
-random;3.974855e+03;-0.000000e+00;9.941114e-11;911;1.633840e+01
-random_between_interval;2.872754e+04;-Inf;9.426528e-11;242;1.028127e+00
-identity;7.351621e+03;-Inf;8.676415e-11;128;2.611323e-01
-2_dist_eig;1.564934e+04;-Inf;7.659593e-11;185;5.976460e-01
-5_dist_eig;4.881140e+04;-Inf;8.452385e-11;266;1.298092e+00
-all_diff;1.636439e+11;-Inf;1.460101e-10;9214;3.178878e+03
