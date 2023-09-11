@@ -11,7 +11,7 @@ function [S, P, creation_time_S] = create_preconditioner(D, E)
         P(1:size(D, 1), 1:size(D, 1)) = D;
         P(size(D, 1)+1:end, size(E, 2)+1:end) = -S;
         
-        P = ichol(sparse(P));
     total_precond_time = toc;
     fprintf("S matrix created in %f seconds.\n",creation_time_S);
+    fprintf("P matrix created in %f seconds.\n",total_precond_time);
 end
