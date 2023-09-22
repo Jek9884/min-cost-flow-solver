@@ -1,2 +1,0 @@
-file_name;cond;det;our relative residual;our number of iterations;our time;GMRES relative residual;GMRES number of iterations;MINRES time;GMRES relative residual;MINRES number of iterations;MINRES time;  creation time of S;
-net10_8_3;7.351621e+03;-Inf;5.918572e-11;46;0.362851;9.509815e-11;45;0.082815;4.570383e-11;48;0.035324;1.368354;

@@ -34,6 +34,7 @@ for i = 1:length(filenames)
 
     residuals{1} = our_res_vec;
 
+
     dim = size(D, 1) + size(E, 1);
     fake_precond = eye(size(A)); %This is needed just to pass x0=starting_point.
     total_time = 0;
