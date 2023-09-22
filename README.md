@@ -73,6 +73,8 @@ To check the correctness and the performance of the algorithm, a suite of tests 
 
 The results (.csv and plots) of the tests are stored in their corresponding folders.
 
+To explore a specific case, execute the main.m file and utilize the prompt to select the parameters.
+
 ## 🗃️ Main Files
 
     📦 
