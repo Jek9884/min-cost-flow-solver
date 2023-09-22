@@ -143,7 +143,7 @@ function [x, r_rel, residuals, break_flag, k] = our_gmres(D, E, S, b, starting_p
 
   if debug
     fprintf("The algorithm ends with %d iterations, the break_flag is %d\n", k, break_flag);
-    semilogy(residuals);
+    plot_res(residuals,threshold);
   end
 end
 
@@ -302,3 +302,23 @@ function r = calculate_the_residual_optimized(D, E, S, D_chol, b, input_vector)
      r = (b - [(D.*part_1)+(E'*part_2); E*part_1]);
   end
 end
+
+
+%
+% This function generate graphs of the residuals in a logarithmic scale
+%
+%
+%
+% Input: residuals - the vector containing all the residual values
+%        threshold - the threshold used as stopping criteria
+%
+% Output: the plot representing the evolution of the residual through time
+%
+function plot_res(residuals,threshold)
+    figure;
+    p = semilogy(residuals, 'LineWidth',2);
+    p.Color=["#0072BD"];
+    xlabel('iteration');
+    ylabel('residual');
+    yline(threshold,'--','Threshold','LineWidth',3);
+end 
